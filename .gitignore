@@ -1,0 +1,39 @@
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Логи и временные файлы
+logs/
+*.log
+*.tmp
+
+# Конфигурационные файлы
+*.env
+
+# Кэш и временные файлы
+*.pyc
+__pycache__/
+*.swp
+
+# Директории виртуальных окружений
+venv/
+env/
+
+# Node.js
+node_modules/
+
+# Build каталоги
+dist/
+build/
+
+# IDE и редакторы
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db

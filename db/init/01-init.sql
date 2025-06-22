@@ -1,5 +1,7 @@
-CREATE EXTENSION IF NOT EXISTS "pgcrypto"; 
-CREATE EXTENSION IF NOT EXISTS "pgvector";
+CREATE EXTENSION IF NOT EXISTS "vector";
+
+-- оставляем pgcrypto как было
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS chat_history
 (

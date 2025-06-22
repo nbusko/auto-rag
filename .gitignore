@@ -37,3 +37,6 @@ build/
 
 # Windows
 Thumbs.db
+
+#db
+postgres_data

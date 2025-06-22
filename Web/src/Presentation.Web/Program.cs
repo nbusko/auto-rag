@@ -7,18 +7,17 @@ using AutoRag.Infrastructure.External.FastApi;
 using AutoRag.Infrastructure.Factories;
 using AutoRag.Infrastructure.Persistence;
 using AutoRag.Infrastructure.Repositories;
+using AutoRag.Infrastructure.Storage;
 using AutoRag.Infrastructure.ServicesStub;
 using Microsoft.EntityFrameworkCore;
+using Minio;
+using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var cfg = builder.Configuration;
 
-/*
- * Строка подключения
- *  – локальный запуск использует Pg из appsettings.json (ключ "Pg");
- *  – в docker-compose передаётся переменная окружения ConnectionStrings__DefaultConnection.
- */
+/* ---------- Connection string ---------- */
 var connectionString =
         cfg.GetConnectionString("DefaultConnection") ??
         cfg.GetConnectionString("Pg") ??
@@ -27,6 +26,19 @@ var connectionString =
 
 builder.Services.AddDbContext<AutoRagContext>(o =>
     o.UseNpgsql(connectionString));
+
+/* ---------- MinIO ---------- */
+builder.Services.Configure<MinioSettings>(cfg.GetSection("Minio"));
+
+builder.Services.AddSingleton<MinioClient>(sp =>
+{
+    var opts = sp.GetRequiredService<IOptions<MinioSettings>>().Value;
+
+    return new MinioClient()
+                .WithEndpoint(opts.Endpoint)
+                .WithCredentials(opts.AccessKey, opts.SecretKey)
+                .Build();
+});
 
 /* ---------- DI ---------- */
 builder.Services.AddScoped<IYearDataRepository, YearDataRepository>();
@@ -38,10 +50,14 @@ builder.Services.AddHttpClient<IExternalWeatherService, ExternalWeatherClient>(c
 
 builder.Services.AddScoped<IYearDataService, YearDataService>();
 builder.Services.AddScoped<IRagConfigService, RagConfigService>();
-builder.Services.AddScoped<IAuthService, AuthServiceStub>();
-builder.Services.AddScoped<IFileStorageService, FileStorageServiceStub>();
-builder.Services.AddScoped<IChatService,  ChatServiceStub>();
+builder.Services.AddSingleton<IFileStorageService, MinioFileStorageService>(); // реальное хранилище
+
+/* ---- stubs ---- */
+builder.Services.AddScoped<IChatService,    ChatServiceStub>();
 builder.Services.AddScoped<IAccountService, AccountServiceStub>();
+builder.Services.AddScoped<IAuthService,    AuthServiceStub>();
+/* ---------------- */
+
 builder.Services.AddScoped<IServiceFactory, ServiceFactory>();
 
 /* ---------- misc ---------- */

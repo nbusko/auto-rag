@@ -22,6 +22,20 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: auto-rag-minio-1
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console UI
+
   web:
     build:
       context: ./Web
@@ -30,13 +44,20 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      minio:
+        condition: service_started
 
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=ragdb;Username=raguser;Password=ragpass
+      Minio__Endpoint: http://minio:9000
+      Minio__AccessKey: minio
+      Minio__SecretKey: minio123
+      Minio__Bucket: autorag
 
     ports:
       - "8080:8080"
 
 volumes:
   pgdata:
+  minio-data:

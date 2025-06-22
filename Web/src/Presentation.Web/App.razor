@@ -1,0 +1,20 @@
+﻿@using MudBlazor
+@using AutoRag.Presentation.Web.Shared
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData"
+                   DefaultLayout="@typeof(AutoRag.Presentation.Web.Shared.MainLayout)" />
+    </Found>
+
+    <NotFound>
+        <LayoutView Layout="@typeof(AutoRag.Presentation.Web.Shared.MainLayout)">
+            <MudText Typo="Typo.h6">Nothing here.</MudText>
+        </LayoutView>
+    </NotFound>
+</Router>

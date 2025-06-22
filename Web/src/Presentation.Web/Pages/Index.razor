@@ -1,0 +1,88 @@
+﻿@page "/"
+@layout AutoRag.Presentation.Web.Shared.LandingLayout
+@inject NavigationManager Nav
+
+<link href="css/landing.css" rel="stylesheet" />
+
+<div class="hero">
+    <MudText Typo="Typo.h2" Class="mb-4 fade-in">
+        AutoRag – RAG Platform for Everyone
+    </MudText>
+
+    <MudText Typo="Typo.subtitle1" Class="mb-6 px-4 fade-in delay-1" Style="max-width:700px">
+        Upload your knowledge bases, fine-tune retrieval parameters and start asking questions
+        without writing a single line of code. Build prototypes, internal copilots and full-scale
+        applications in minutes – not weeks.
+    </MudText>
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Secondary"
+               Size="Size.Large"
+               Class="fade-in delay-2"
+               OnClick="GoRegister">
+        Get started – it’s free
+    </MudButton>
+</div>
+
+<section class="features">
+    <div class="feature-card">
+        <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" Color="Color.Primary" />
+        <h4>No-code ingestion</h4>
+        <p>Drag &amp; drop PDFs, DOCX, TXT or connect your existing data sources.</p>
+    </div>
+    <div class="feature-card">
+        <MudIcon Icon="@Icons.Material.Filled.Tune" Size="Size.Large" Color="Color.Secondary" />
+        <h4>Fine control</h4>
+        <p>Adjust chunk size, Top-K, similarity metric and system prompt in one click.</p>
+    </div>
+    <div class="feature-card">
+        <MudIcon Icon="@Icons.Material.Filled.FlashOn" Size="Size.Large" Color="Color.Warning" />
+        <h4>Blazing fast</h4>
+        <p>Vector search powered by Postgres + pgvector delivers results under 100&nbsp;ms.</p>
+    </div>
+</section>
+
+<style>
+    .features {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2rem;
+        padding: 4rem 1rem;
+        background: #fff;
+    }
+
+    .feature-card {
+        max-width: 280px;
+        text-align: center;
+        padding: 1rem
+    }
+
+    .fade-in {
+        animation: fadein .7s both
+    }
+
+    .delay-1 {
+        animation-delay: .3s
+    }
+
+    .delay-2 {
+        animation-delay: .6s
+    }
+
+    @@keyframes fadein {
+        from {
+            opacity: 0;
+            transform: translateY(30px)
+        }
+
+        to {
+            opacity: 1;
+            transform: none
+        }
+    }
+</style>
+
+@code {
+    private void GoRegister() => Nav.NavigateTo("/auth");
+}

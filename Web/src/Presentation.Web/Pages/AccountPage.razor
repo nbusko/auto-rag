@@ -1,0 +1,35 @@
+﻿@page "/account"
+@using AutoRag.Application.DTOs
+@using AutoRag.Application.Interfaces
+@inject IAccountService AccSvc
+@inject ISnackbar      Snackbar
+
+<PageTitle>Account</PageTitle>
+
+<MudPaper Class="pa-4 mx-auto" Style="max-width:500px">
+    <MudText Typo="Typo.h5">Account settings</MudText>
+
+    <MudForm @ref="_form">
+        <MudTextField T="string" Label="Full name" @bind-Value="_dto.FullName" Required="true" />
+        <MudTextField T="string" Label="Email" @bind-Value="_dto.Email" Disabled="true" />
+        <MudTextField T="string" Label="Organization" @bind-Value="_dto.Organization" />
+        <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
+    </MudForm>
+</MudPaper>
+
+@code {
+    private AccountDto _dto = new();
+    private MudForm _form = default!;
+
+    protected override async Task OnInitializedAsync()
+        => _dto = await AccSvc.GetAsync();
+
+    private async Task Save()
+    {
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        await AccSvc.UpdateAsync(_dto);
+        Snackbar.Add("Profile updated", Severity.Success);
+    }
+}

@@ -1,0 +1,27 @@
+﻿@namespace AutoRag.Presentation.Web.Shared
+@inherits LayoutComponentBase
+@using MudBlazor
+
+<MudLayout>
+
+    <MudAppBar Color="Color.Primary">
+        <MudText Typo="Typo.h6" Class="ml-2">AutoRag</MudText>
+    </MudAppBar>
+
+    <MudDrawer Open="true">
+        <MudNavMenu>
+            <MudNavLink Href="" Match="NavLinkMatch.All"
+                        Icon="@Icons.Material.Filled.Home">
+                Home
+            </MudNavLink>
+
+            <MudNavLink Href="year-report"
+                        Icon="@Icons.Material.Filled.Assessment">
+                Year report
+            </MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <MudMainContent Class="pa-4">@Body</MudMainContent>
+
+</MudLayout>

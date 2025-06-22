@@ -1,0 +1,70 @@
+﻿@page "/rag-settings"
+@using MudBlazor
+@using AutoRag.Application.DTOs
+@using AutoRag.Application.Interfaces
+@inject IFileStorageService FileSvc
+@inject IRagConfigService ConfigSvc
+@inject ISnackbar Snackbar
+
+<PageTitle>RAG settings</PageTitle>
+
+<MudPaper Class="pa-4 mx-auto" Style="max-width:600px">
+    <MudText Typo="Typo.h5">RAG configuration</MudText>
+
+    <MudForm @ref="_form">
+
+        <MudSelect T="Guid?" Label="Document"
+                   @bind-Value="_config.SelectedDocumentId"
+                   Required="true">
+            @if (_docs.Count == 0)
+            {
+                <MudSelectItem T="Guid?" Disabled="true">No documents</MudSelectItem>
+            }
+            else
+            {
+                @foreach (var d in _docs)
+                {
+                    <MudSelectItem T="Guid?" Value="@(d.Id)">@d.FileName</MudSelectItem>
+                }
+            }
+        </MudSelect>
+
+        <MudTextField T="string" Label="System prompt"
+                      Lines="3" @bind-Value="_config.SystemPrompt" />
+
+        <MudNumericField T="int" Label="Top-K"
+                         Min="1" Max="10"
+                         @bind-Value="_config.TopK" />
+
+        <MudNumericField T="decimal" Label="Temperature"
+                         Min="0" Max="2"
+                         Step="@(0.1m)"
+                         @bind-Value="_temperature" />
+
+        <MudButton OnClick="Save" Color="Color.Primary" Variant="Variant.Filled">
+            Save
+        </MudButton>
+    </MudForm>
+</MudPaper>
+
+@code {
+    private List<DocumentInfoDto> _docs = [];
+    private RagConfigDto _config = new(null,"You are RAG system",3);
+    private decimal _temperature = 0.0m;
+    private MudForm _form = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _docs = (await FileSvc.ListAsync()).ToList();
+        _config = await ConfigSvc.GetAsync() ?? _config;
+    }
+
+    private async Task Save()
+    {
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        await ConfigSvc.SaveAsync(_config);
+        Snackbar.Add("Configuration saved", Severity.Success);
+    }
+}

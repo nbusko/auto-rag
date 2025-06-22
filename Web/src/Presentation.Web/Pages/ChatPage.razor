@@ -1,0 +1,46 @@
+﻿@page "/chat"
+@using AutoRag.Application.DTOs
+@using AutoRag.Application.Interfaces
+@using Microsoft.AspNetCore.Components.Web
+@inject IChatService ChatSvc
+@inject ISnackbar Snackbar
+
+<PageTitle>Chat</PageTitle>
+
+<MudPaper Class="pa-4 mx-auto" Style="max-width:700px;height:80vh;display:flex;flex-direction:column">
+    <MudText Typo="Typo.h5">Assistant</MudText>
+
+    <div class="messages flex-grow-1 mt-3" style="overflow-y:auto">
+        @foreach (var m in _messages)
+        {
+            <MudAlert Elevation="0" Variant="Variant.Filled"
+                      Severity="@(m.Role=="user"?Severity.Info:Severity.Success)"
+                      Class="mb-2">
+                <b>@m.Role:</b> @m.Content
+            </MudAlert>
+        }
+    </div>
+
+    <MudTextField T="string"
+                  Placeholder="Type your message..."
+                  @bind-Value="_input"
+                  Immediate="true"
+                  OnKeyDown="HandleKey" />
+</MudPaper>
+
+@code {
+    private readonly List<ChatMessageDto> _messages = [];
+    private string _input = string.Empty;
+
+    private async Task HandleKey(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter" || string.IsNullOrWhiteSpace(_input)) return;
+
+        var userMsg = new ChatMessageDto("user", _input, DateTime.UtcNow);
+        _messages.Add(userMsg);
+        var resp = await ChatSvc.SendAsync(new ChatRequestDto(_input));
+        _messages.Add(new ChatMessageDto("assistant", resp.Message, DateTime.UtcNow));
+        _input = string.Empty;
+    }
+}
+

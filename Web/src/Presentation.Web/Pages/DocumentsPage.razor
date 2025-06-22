@@ -1,0 +1,128 @@
+﻿@page "/documents"
+@using MudBlazor
+@using Microsoft.AspNetCore.Components.Forms
+@using AutoRag.Application.DTOs
+@inject IFileStorageService FileSvc
+@inject ISnackbar Snackbar
+
+<PageTitle>Documents</PageTitle>
+
+<MudGrid Class="mt-4 gy-4" Style="height:calc(100vh - 140px)">
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pa-4 d-flex flex-column h-100">
+
+            <MudText Typo="Typo.h6" Class="mb-3">Upload knowledge base</MudText>
+
+            <label class="mud-button-root mud-button mud-button-filled mud-button-filled-primary
+                          mud-elevation-1 mud-ripple mb-3"
+                   for="fileInput">
+                <span class="mud-button-label">
+                    <MudIcon Icon="@Icons.Material.Filled.UploadFile" Class="mr-1" />
+                    Choose files
+                </span>
+            </label>
+
+            <!-- hidden input for click-upload -->
+            <InputFile id="fileInput"
+                       multiple
+                       accept=".pdf,.doc,.docx,.txt"
+                       style="display:none"
+                       OnChange="HandleFiles" />
+
+            <!-- drag-and-drop zone -->
+            <div class="upload-zone border rounded mt-2 position-relative"
+                 title="Drag files here or click to browse">
+
+                <InputFile class="upload-input"
+                           multiple
+                           accept=".pdf,.doc,.docx,.txt"
+                           OnChange="HandleFiles" />
+
+                <div class="zone-content d-flex flex-column align-center justify-center h-100">
+                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload"
+                             Size="Size.Large"
+                             Color="Color.Secondary" />
+                    <MudText Typo="Typo.subtitle2" Align="Align.Center">
+                        Drop files here
+                    </MudText>
+                </div>
+            </div>
+
+            <MudText Typo="Typo.caption" Class="mt-2 mud-text-secondary">
+                PDF, DOC(X), TXT up to 50&nbsp;MB each.
+            </MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-4 d-flex flex-column h-100">
+
+            <MudText Typo="Typo.h6">Uploaded documents</MudText>
+
+            <div class="mt-3" style="overflow-y:auto; flex:1">
+                <MudList T="DocumentInfoDto" Dense="true">
+                    @if (_docs.Count == 0)
+                    {
+                        <MudText Class="m-2 mud-text-secondary">No documents yet</MudText>
+                    }
+                    else
+                    {
+                        @foreach (var d in _docs)
+                        {
+                            <MudListItem T="DocumentInfoDto" Value="@d" Icon="@Icons.Material.Filled.Description">
+                                <div>
+                                    <span>@d.FileName</span><br />
+                                    <small class="mud-text-secondary">
+                                        @($"{d.Size / 1024:N0} KB • {d.UploadedAt:g}")
+                                    </small>
+                                </div>
+                            </MudListItem>
+                        }
+                    }
+                </MudList>
+            </div>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<DocumentInfoDto> _docs = new();
+
+    protected override async Task OnInitializedAsync()
+        => _docs = (await FileSvc.ListAsync()).ToList();
+
+    private async Task HandleFiles(InputFileChangeEventArgs e)
+        => await UploadAsync(e.GetMultipleFiles());
+
+    private async Task UploadAsync(IEnumerable<IBrowserFile> files)
+    {
+        foreach (var f in files)
+        {
+            await using var stream = f.OpenReadStream(50 * 1024 * 1024);
+            var doc = await FileSvc.UploadAsync(f.Name, stream);
+            Snackbar.Add($"Uploaded: {doc.FileName}", Severity.Success);
+        }
+
+        _docs = (await FileSvc.ListAsync()).ToList();
+        StateHasChanged();
+    }
+}
+
+<style>
+    .upload-zone {
+        min-height: 160px;
+        background: #fafafa;
+        cursor: pointer;
+    }
+
+    .upload-input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .zone-content {
+        pointer-events: none;
+    }
+</style>

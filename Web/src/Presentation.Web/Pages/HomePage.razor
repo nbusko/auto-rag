@@ -1,0 +1,53 @@
+﻿@page "/home"
+@using MudBlazor
+
+<PageTitle>Home</PageTitle>
+
+<link href="css/landing.css" rel="stylesheet" />
+
+<div class="internal-hero">
+    <MudText Typo="Typo.h2" Class="mb-4 fade-in">
+        Welcome to AutoRag workspace
+    </MudText>
+
+    <MudText Typo="Typo.subtitle1" Class="px-4 fade-in delay-1" Style="max-width:700px">
+        Start by uploading your knowledge base, tweak retrieval parameters
+        and chat with the assistant – all from the navigation on the left.
+        Your journey to production–ready RAG begins now!
+    </MudText>
+</div>
+
+<style>
+    .internal-hero {
+        height: 60vh;
+        background: linear-gradient(150deg,#136a8a 0%,#267871 100%);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .fade-in {
+        animation: fadein .7s both
+    }
+
+    .delay-1 {
+        animation-delay: .3s
+    }
+    @@keyframes fadein {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px)
+    }
+
+    to {
+        opacity: 1;
+        transform: none
+    }
+
+    }
+</style>

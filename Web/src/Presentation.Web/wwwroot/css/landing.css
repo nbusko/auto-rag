@@ -1,0 +1,10 @@
+﻿.hero {
+    height: 100vh;
+    background: linear-gradient(150deg,#1e3c72 0%,#2a5298 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}

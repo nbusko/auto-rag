@@ -1,0 +1,68 @@
+﻿@page "/year-report"
+@using AutoRag.Application.DTOs
+@using AutoRag.Presentation.Web.ViewModels
+@inject AutoRag.Application.Interfaces.IYearDataService YearDataSvc
+
+@* обязательные пространства имён *@
+@using MudBlazor
+@implements IDisposable         
+
+<PageTitle>Year report</PageTitle>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h5">Year report</MudText>
+
+    <MudNumericField T="int"
+                     @bind-Value="_vm.Year"
+                     Label="Year"
+                     Immediate="true" />
+
+    <MudButton Color="Color.Primary" OnClick="Load">Load</MudButton>
+
+    @if (_vm.IsBusy)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else if (_vm.Error is not null)
+    {
+        <MudAlert Severity="Severity.Error">@_vm.Error</MudAlert>
+    }
+    else if (_vm.Report is not null)
+    {
+        IEnumerable<YearDataDto> data = new[] { _vm.Report };
+
+        <MudTable T="YearDataDto" Items="@data" Dense="true" Hover="true">
+            <HeaderContent>
+                <MudTh>Year</MudTh>
+                <MudTh>Income</MudTh>
+                <MudTh>Expense</MudTh>
+                <MudTh>Weather</MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="item">
+                <MudTd DataLabel="Year">@item.Year</MudTd>
+                <MudTd DataLabel="Income">@item.Income</MudTd>
+                <MudTd DataLabel="Expense">@item.Expense</MudTd>
+                <MudTd DataLabel="Weather">@item.WeatherSummary</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudPaper>
+
+@code {
+    private readonly YearDataPageVm _vm = new();
+
+    private async Task Load()
+    {
+        _vm.IsBusy = true;
+        _vm.Error  = null;
+        try
+        {
+            _vm.Report = await YearDataSvc.GetYearReportAsync(_vm.Year);
+        }
+        catch (Exception ex) { _vm.Error = ex.Message; }
+        finally { _vm.IsBusy = false; }
+    }
+
+    public void Dispose() {  }
+}

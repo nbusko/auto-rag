@@ -1,0 +1,78 @@
+﻿@page "/auth"
+@layout AutoRag.Presentation.Web.Shared.LandingLayout
+@using AutoRag.Application.DTOs
+@using AutoRag.Application.Interfaces
+@using AutoRag.Presentation.Web.ViewModels
+@inject IAuthService AuthSvc
+@inject NavigationManager Nav
+
+<PageTitle>Authentication</PageTitle>
+
+<MudPaper Class="pa-6 mx-auto" Style="max-width:450px">
+    <MudTabs ActivePanelIndex="_tabIndex"
+             OnActivePanelIndexChanged="TabChanged"
+             Rounded="true">
+
+        <MudTabPanel Text="Register">
+            @RegisterForm()
+        </MudTabPanel>
+
+        <MudTabPanel Text="Login">
+            @LoginForm()
+        </MudTabPanel>
+
+    </MudTabs>
+</MudPaper>
+
+@code {
+    private readonly AuthPageVm _vm = new();
+    private int _tabIndex;    
+
+    private RenderFragment RegisterForm() => @<div>
+        <MudTextField @bind-Value="_vm.FullName" Label="Full name" Required="true" />
+        <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" />
+        <MudTextField @bind-Value="_vm.Password" Label="Password" InputType="InputType.Password" Required="true" />
+
+        <MudButton Color="Color.Primary" Disabled="_vm.IsBusy" OnClick="Register">Register</MudButton>
+        @Message()
+    </div>;
+
+    private RenderFragment LoginForm() => @<div>
+        <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" />
+        <MudTextField @bind-Value="_vm.Password" Label="Password" InputType="InputType.Password" Required="true" />
+
+        <MudButton Color="Color.Primary" Disabled="_vm.IsBusy" OnClick="Login">Login</MudButton>
+        @Message()
+    </div>;
+
+    private RenderFragment Message() => @<div class="mt-2">
+        @if (_vm.IsBusy)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else if (_vm.Message is not null)
+        {
+            <MudAlert Severity="Severity.Info">@_vm.Message</MudAlert>
+        }
+    </div>;
+
+    private void TabChanged(int index){_tabIndex=index;_vm.IsLogin=index==1;}
+
+    private async Task Register()
+    {
+        _vm.IsBusy = true;
+        var res = await AuthSvc.RegisterAsync(new RegisterDto(_vm.FullName!, _vm.Email, _vm.Password));
+        _vm.Message = res.Message;
+        _vm.IsBusy = false;
+        Nav.NavigateTo("/home");
+    }
+
+    private async Task Login()
+    {
+        _vm.IsBusy = true;
+        var res = await AuthSvc.LoginAsync(new LoginDto(_vm.Email, _vm.Password));
+        _vm.Message = res.Message;
+        _vm.IsBusy = false;
+        Nav.NavigateTo("/home");
+    }
+}

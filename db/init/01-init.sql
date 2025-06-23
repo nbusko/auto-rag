@@ -1,8 +1,23 @@
 CREATE EXTENSION IF NOT EXISTS "vector";
-
--- оставляем pgcrypto как было
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- ---------------- users & auth ------------------
+CREATE TABLE IF NOT EXISTS users
+(
+    user_id      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name    text      NOT NULL,
+    email        text      NOT NULL UNIQUE,
+    organization text,
+    rag_id       uuid      NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_credentials
+(
+    user_id       uuid PRIMARY KEY REFERENCES users (user_id) ON DELETE CASCADE,
+    password_hash text NOT NULL
+);
+
+-- --------------- RAG & chat ---------------------
 CREATE TABLE IF NOT EXISTS chat_history
 (
     rag_id       uuid NOT NULL,
@@ -13,7 +28,7 @@ CREATE TABLE IF NOT EXISTS chat_history
 
 CREATE TABLE IF NOT EXISTS rag_settings
 (
-    rag_id      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    rag_id      uuid PRIMARY KEY,
     prompt      text    NOT NULL,
     document_id uuid
 );

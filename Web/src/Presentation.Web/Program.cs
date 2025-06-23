@@ -7,6 +7,7 @@ using AutoRag.Infrastructure.Factories;
 using AutoRag.Infrastructure.Persistence;
 using AutoRag.Infrastructure.Repositories;
 using AutoRag.Infrastructure.Storage;
+using AutoRag.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Minio;
@@ -22,6 +23,9 @@ var connectionString =
         throw new InvalidOperationException("Connection string not found");
 
 builder.Services.AddDbContext<AutoRagContext>(o => o.UseNpgsql(connectionString));
+
+/* ---------- current user accessor ---------- */
+builder.Services.AddScoped<ICurrentUser, CurrentUserAccessor>();
 
 /* ---------- MinIO ---------- */
 builder.Services.Configure<MinioSettings>(cfg.GetSection("Minio"));
@@ -42,9 +46,10 @@ builder.Services.AddSingleton<IMinioClient>(sp =>
 });
 
 /* ---------- Repositories ---------- */
-builder.Services.AddScoped<IYearDataRepository,     YearDataRepository>();
-builder.Services.AddScoped<IRagConfigRepository,    RagConfigRepository>();
-builder.Services.AddScoped<IChatHistoryRepository,  ChatHistoryRepository>();
+builder.Services.AddScoped<IUserRepository,          UserRepository>();
+builder.Services.AddScoped<IYearDataRepository,      YearDataRepository>();
+builder.Services.AddScoped<IRagConfigRepository,     RagConfigRepository>();
+builder.Services.AddScoped<IChatHistoryRepository,   ChatHistoryRepository>();
 
 /* ---------- External clients ---------- */
 builder.Services.AddHttpClient<IExternalWeatherService, ExternalWeatherClient>(c =>
@@ -54,14 +59,12 @@ builder.Services.AddHttpClient<IAssistantService, AssistantClient>(c =>
     c.BaseAddress = new Uri(cfg["ExternalApis:Assistant"]!));
 
 /* ---------- Services ---------- */
-builder.Services.AddScoped<IYearDataService, YearDataService>();
-builder.Services.AddScoped<IRagConfigService, RagConfigService>();
-builder.Services.AddScoped<IChatService,      ChatService>();
-builder.Services.AddSingleton<IFileStorageService, MinioFileStorageService>();
-
-/* ---- заглушки ---- */
-builder.Services.AddScoped<IAccountService, AutoRag.Infrastructure.ServicesStub.AccountServiceStub>();
-builder.Services.AddScoped<IAuthService,    AutoRag.Infrastructure.ServicesStub.AuthServiceStub>();
+builder.Services.AddScoped<IAuthService,       AuthService>();
+builder.Services.AddScoped<IAccountService,    AccountService>();
+builder.Services.AddScoped<IYearDataService,   YearDataService>();
+builder.Services.AddScoped<IRagConfigService,  RagConfigService>();
+builder.Services.AddScoped<IChatService,       ChatService>();
+builder.Services.AddScoped<IFileStorageService, MinioFileStorageService>();   // теперь scoped
 
 /* ---------- misc ---------- */
 builder.Services.AddAutoMapper(typeof(YearDataProfile).Assembly);

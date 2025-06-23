@@ -7,20 +7,23 @@ namespace AutoRag.Application.Services;
 
 public sealed class ChatService : IChatService
 {
-    private static readonly Guid _ragId = Guid.Empty;   // пока одна-единственная сессия
-
     private readonly IChatHistoryRepository _repo;
     private readonly IAssistantService      _assistant;
+    private readonly ICurrentUser           _current;
 
-    public ChatService(IChatHistoryRepository r, IAssistantService a) => (_repo, _assistant) = (r, a);
+    public ChatService(IChatHistoryRepository r,
+                       IAssistantService a,
+                       ICurrentUser c)
+                       => (_repo,_assistant,_current) = (r,a,c);
 
-    /* ---------- отправка ---------- */
+    private Guid RagId => _current.RagId ?? throw new InvalidOperationException("Not authenticated");
+
     public async Task<ChatResponseDto> SendAsync(ChatRequestDto req, CancellationToken ct = default)
     {
         var userMsg = new ChatMessage
         {
             Id          = Guid.NewGuid(),
-            RagId       = _ragId,
+            RagId       = RagId,
             MessageType = "user",
             Text        = req.Message
         };
@@ -31,7 +34,7 @@ public sealed class ChatService : IChatService
         var assistantMsg = new ChatMessage
         {
             Id          = Guid.NewGuid(),
-            RagId       = _ragId,
+            RagId       = RagId,
             MessageType = "assistant",
             Text        = answer
         };
@@ -40,17 +43,13 @@ public sealed class ChatService : IChatService
         return new ChatResponseDto(answer);
     }
 
-    /* ---------- история ---------- */
     public async Task<IReadOnlyList<ChatMessageDto>> GetHistoryAsync(CancellationToken ct = default)
     {
-        var list = await _repo.GetByRagIdAsync(_ragId, ct);
+        var list = await _repo.GetByRagIdAsync(RagId, ct);
 
         return list
             .OrderBy(m => m.Id)
-            .Select(m => new ChatMessageDto(
-                            m.MessageType,
-                            m.Text,
-                            DateTime.UtcNow))   // точной даты в модели нет
+            .Select(m => new ChatMessageDto(m.MessageType, m.Text, DateTime.UtcNow))
             .ToList()
             .AsReadOnly();
     }

@@ -11,27 +11,31 @@ namespace AutoRag.Infrastructure.Storage;
 
 public sealed class MinioFileStorageService : IFileStorageService
 {
-    private const string IndexObjectKey = "_index.json";
-
-    private readonly IMinioClient _minio;          // интерфейс вместо класса
+    private readonly IMinioClient _minio;
     private readonly MinioSettings _settings;
+    private readonly ICurrentUser _current;
 
-    private static readonly ConcurrentDictionary<Guid, DocumentInfoDto> _indexCache = new();
+    /*  индекс документов хранится отдельно для каждого rag-id   */
+    private static readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, DocumentInfoDto>> _indices = new();
     private static readonly ConcurrentDictionary<string, byte> _bucketInit = new();
 
-    public MinioFileStorageService(IMinioClient client, IOptions<MinioSettings> opt)
+    public MinioFileStorageService(IMinioClient client,
+                                   IOptions<MinioSettings> opt,
+                                   ICurrentUser current)
     {
-        _minio = client;
+        _minio   = client;
         _settings = opt.Value;
+        _current  = current;
     }
 
-    /* ---------- upload ---------- */
+    /* ------------------------------------------------ upload --------------------------------------------- */
     public async Task<DocumentInfoDto> UploadAsync(string fileName, Stream content, CancellationToken ct = default)
     {
         await EnsureBucketAsync(ct);
+        var ragId = GetRagId();
 
-        var id = Guid.NewGuid();
-        var objectKey = $"{id}/{fileName}";
+        var id        = Guid.NewGuid();
+        var objectKey = $"{ragId}/{id}/{fileName}";
 
         await _minio.PutObjectAsync(
             new PutObjectArgs()
@@ -47,27 +51,33 @@ public sealed class MinioFileStorageService : IFileStorageService
             UploadedAt = DateTime.UtcNow
         };
 
-        _indexCache[id] = info;
-        await SaveIndexAsync(ct);
+        GetIndex(ragId)[id] = info;
+        await SaveIndexAsync(ragId, ct);
 
         return info;
     }
 
-    /* ---------- list ---------- */
+    /* ------------------------------------------------ list ------------------------------------------------ */
     public async Task<IReadOnlyList<DocumentInfoDto>> ListAsync(CancellationToken ct = default)
     {
         await EnsureBucketAsync(ct);
+        var ragId = GetRagId();
 
-        if (_indexCache.IsEmpty)
-            await LoadIndexAsync(ct);
+        if (GetIndex(ragId).IsEmpty)
+            await LoadIndexAsync(ragId, ct);
 
-        return _indexCache.Values
-                          .OrderByDescending(d => d.UploadedAt)
-                          .ToList()
-                          .AsReadOnly();
+        return GetIndex(ragId).Values
+                              .OrderByDescending(d => d.UploadedAt)
+                              .ToList()
+                              .AsReadOnly();
     }
 
-    /* ---------- helpers ---------- */
+    /* ------------------------------------------- helpers -------------------------------------------------- */
+    private Guid GetRagId() => _current.RagId ?? throw new InvalidOperationException("Unauthenticated");
+
+    private ConcurrentDictionary<Guid, DocumentInfoDto> GetIndex(Guid ragId)
+        => _indices.GetOrAdd(ragId, _ => new());
+
     private async Task EnsureBucketAsync(CancellationToken ct)
     {
         if (_bucketInit.ContainsKey(_settings.Bucket)) return;
@@ -93,7 +103,9 @@ public sealed class MinioFileStorageService : IFileStorageService
         _bucketInit.TryAdd(_settings.Bucket, 0);
     }
 
-    private async Task LoadIndexAsync(CancellationToken ct)
+    private string IndexKey(Guid ragId) => $"{ragId}/_index.json";
+
+    private async Task LoadIndexAsync(Guid ragId, CancellationToken ct)
     {
         try
         {
@@ -102,7 +114,7 @@ public sealed class MinioFileStorageService : IFileStorageService
             await _minio.GetObjectAsync(
                 new GetObjectArgs()
                     .WithBucket(_settings.Bucket)
-                    .WithObject(IndexObjectKey)
+                    .WithObject(IndexKey(ragId))
                     .WithCallbackStream(stream => stream.CopyTo(ms)),
                 ct);
 
@@ -111,24 +123,24 @@ public sealed class MinioFileStorageService : IFileStorageService
                        ?? [];
 
             foreach (var d in list)
-                _indexCache[d.Id] = d;
+                GetIndex(ragId)[d.Id] = d;
         }
         catch (ObjectNotFoundException)
         {
-            // индекса ещё нет – это нормально
+            /* индекса ещё нет – это нормально */
         }
     }
 
-    private async Task SaveIndexAsync(CancellationToken ct)
+    private async Task SaveIndexAsync(Guid ragId, CancellationToken ct)
     {
         await using var ms = new MemoryStream();
-        await JsonSerializer.SerializeAsync(ms, _indexCache.Values.ToList(), cancellationToken: ct);
+        await JsonSerializer.SerializeAsync(ms, GetIndex(ragId).Values.ToList(), cancellationToken: ct);
         ms.Position = 0;
 
         await _minio.PutObjectAsync(
             new PutObjectArgs()
                 .WithBucket(_settings.Bucket)
-                .WithObject(IndexObjectKey)
+                .WithObject(IndexKey(ragId))
                 .WithStreamData(ms)
                 .WithObjectSize(ms.Length)
                 .WithContentType("application/json"),

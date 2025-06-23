@@ -8,44 +8,55 @@
 
 <PageTitle>Authentication</PageTitle>
 
-<MudPaper Class="pa-6 mx-auto" Style="max-width:450px">
-    <MudTabs ActivePanelIndex="_tabIndex"
-             OnActivePanelIndexChanged="TabChanged"
-             Rounded="true">
+<link href="css/landing.css" rel="stylesheet" />
 
-        <MudTabPanel Text="Register">
-            @RegisterForm()
-        </MudTabPanel>
+<div class="auth-container d-flex justify-center align-center">
+    <MudPaper Class="pa-6" Style="max-width:450px; width:100%">
+        <MudTabs ActivePanelIndex="_tabIndex"
+                 OnActivePanelIndexChanged="TabChanged"
+                 Rounded="true">
 
-        <MudTabPanel Text="Login">
-            @LoginForm()
-        </MudTabPanel>
+            <MudTabPanel Text="Register">
+                <MudForm @ref="_regForm">
+                    <MudTextField @bind-Value="_vm.FullName" Label="Full name" Required="true" />
+                    <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" />
+                    <MudTextField @bind-Value="_vm.Password" Label="Password"
+                                   InputType="InputType.Password" Required="true" />
+                    <div class="d-flex justify-center mt-4">
+                        <MudButton Color="Color.Primary" Disabled="_vm.IsBusy" OnClick="Register">
+                            Register
+                        </MudButton>
+                    </div>
+                </MudForm>
+                @Message()
+            </MudTabPanel>
 
-    </MudTabs>
-</MudPaper>
+            <MudTabPanel Text="Login">
+                <MudForm @ref="_loginForm">
+                    <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" />
+                    <MudTextField @bind-Value="_vm.Password" Label="Password"
+                                   InputType="InputType.Password" Required="true" />
+                    <div class="d-flex justify-center mt-4">
+                        <MudButton Color="Color.Primary" Disabled="_vm.IsBusy" OnClick="Login">
+                            Login
+                        </MudButton>
+                    </div>
+                </MudForm>
+                @Message()
+            </MudTabPanel>
+
+        </MudTabs>
+    </MudPaper>
+</div>
 
 @code {
     private readonly AuthPageVm _vm = new();
-    private int _tabIndex;    
+    private int _tabIndex;
 
-    private RenderFragment RegisterForm() => @<div>
-        <MudTextField @bind-Value="_vm.FullName" Label="Full name" Required="true" />
-        <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" />
-        <MudTextField @bind-Value="_vm.Password" Label="Password" InputType="InputType.Password" Required="true" />
+    private MudForm _regForm   = default!;
+    private MudForm _loginForm = default!;
 
-        <MudButton Color="Color.Primary" Disabled="_vm.IsBusy" OnClick="Register">Register</MudButton>
-        @Message()
-    </div>;
-
-    private RenderFragment LoginForm() => @<div>
-        <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" />
-        <MudTextField @bind-Value="_vm.Password" Label="Password" InputType="InputType.Password" Required="true" />
-
-        <MudButton Color="Color.Primary" Disabled="_vm.IsBusy" OnClick="Login">Login</MudButton>
-        @Message()
-    </div>;
-
-    private RenderFragment Message() => @<div class="mt-2">
+    private RenderFragment Message() => @<div class="mt-2 d-flex justify-center">
         @if (_vm.IsBusy)
         {
             <MudProgressCircular Indeterminate="true" />
@@ -56,23 +67,39 @@
         }
     </div>;
 
-    private void TabChanged(int index){_tabIndex=index;_vm.IsLogin=index==1;}
+    private void TabChanged(int idx) { _tabIndex = idx; }
 
     private async Task Register()
     {
+        await _regForm.Validate();
+        if (!_regForm.IsValid) return;
+
         _vm.IsBusy = true;
         var res = await AuthSvc.RegisterAsync(new RegisterDto(_vm.FullName!, _vm.Email, _vm.Password));
         _vm.Message = res.Message;
         _vm.IsBusy = false;
-        Nav.NavigateTo("/home");
+
+        if (!string.IsNullOrEmpty(res.UserId))
+            Nav.NavigateTo("/home");
     }
 
     private async Task Login()
     {
+        await _loginForm.Validate();
+        if (!_loginForm.IsValid) return;
+
         _vm.IsBusy = true;
         var res = await AuthSvc.LoginAsync(new LoginDto(_vm.Email, _vm.Password));
         _vm.Message = res.Message;
         _vm.IsBusy = false;
-        Nav.NavigateTo("/home");
+
+        if (!string.IsNullOrEmpty(res.UserId))
+            Nav.NavigateTo("/home");
     }
 }
+
+<style>
+    .auth-container {
+        height: 100vh;
+    }
+</style>

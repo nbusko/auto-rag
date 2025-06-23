@@ -3,6 +3,7 @@ uvicorn
 # sqlalchemy
 psycopg2-binary
 pydantic
+pydantic-settings
 python-dotenv
 sentence-transformers
 numpy

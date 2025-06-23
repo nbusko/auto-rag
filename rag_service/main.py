@@ -6,10 +6,7 @@ from fastapi.openapi.utils import get_openapi
 from datetime import datetime
 import os
 
-from models import RAGRequest, RAGResponse
-from database import DatabaseManager
-from rag_pipeline import RAGPipeline
-
+from router import router
 from config.logger import setup_logging
 
 setup_logging()
@@ -31,6 +28,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Подключаем роутер
+app.include_router(router, prefix="/api/v1")
 
 logger.info("RAG Service initialized successfully")
 

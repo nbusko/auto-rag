@@ -6,23 +6,26 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Обновляем pip
 RUN pip install --upgrade pip setuptools wheel
 
-# Копируем и устанавливаем зависимости поэтапно
+# Копируем и устанавливаем зависимости
 COPY requirements.txt .
 
-# Устанавливаем базовые зависимости
-RUN pip install --no-cache-dir fastapi uvicorn sqlalchemy psycopg2-binary pydantic python-dotenv requests
+# Устанавливаем все зависимости
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Устанавливаем ML зависимости
-RUN pip install --no-cache-dir numpy sentence-transformers
-
-# Устанавливаем OpenAI и LangChain
-RUN pip install --no-cache-dir openai langchain langchain-openai
-
+# Копируем код приложения
 COPY . .
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5060"] 
+# Создаем директорию для логов
+RUN mkdir -p /app/logs
+
+# Открываем порт
+EXPOSE 5060
+
+# Запускаем приложение
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5060", "--reload"] 

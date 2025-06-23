@@ -1,12 +1,8 @@
 import logging
 import os
 from fastapi import APIRouter, HTTPException
-from fastapi import FastAPI, HTTPException
-
 from datetime import datetime
-import os
 from config.contracts import RAGRequest, RAGResponse
-
 from rag_pipeline import RAGPipeline
 
 logger = logging.getLogger(__name__)
@@ -39,8 +35,11 @@ async def process_rag_request(request: RAGRequest):
         rag_pipeline = RAGPipeline()
         # Обрабатываем RAG запрос
         result = await rag_pipeline.process_rag_request(
+            request.chat_id,
             request.user_message,
+            str(request.document_id),
             request.message_id,
+            request.llm,
             request.prompt_retrieve,
             request.prompt_augmentation,
             request.prompt_generation,
@@ -49,13 +48,12 @@ async def process_rag_request(request: RAGRequest):
             request.threshold,
             request.embeddings,
             request.text_chunks,
-            request.llm,
         )
         
         # Проверяем на ошибки
-        if "error" in result:
-            logger.error(f"RAG processing error: {result['error']}")
-            raise HTTPException(status_code=400, detail=result["error"])
+        if result.status == "error":
+            logger.error(f"RAG processing error: {result.message}")
+            raise HTTPException(status_code=400, detail=result.message)
         
         logger.info(f"RAG request processed for chat_id: {request.chat_id}")
         

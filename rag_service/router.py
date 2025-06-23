@@ -7,8 +7,7 @@ from datetime import datetime
 import os
 from config.contracts import RAGRequest, RAGResponse
 
-from main import rag_pipeline
-
+from rag_pipeline import RAGPipeline
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -37,9 +36,20 @@ async def process_rag_request(request: RAGRequest):
         
         logger.info(f"Processing user message: {request.user_message[:100]}...")
         
+        rag_pipeline = RAGPipeline()
         # Обрабатываем RAG запрос
-        result = rag_pipeline.process_rag_request(
-            **request.model_dump()
+        result = await rag_pipeline.process_rag_request(
+            request.user_message,
+            request.message_id,
+            request.prompt_retrieve,
+            request.prompt_augmentation,
+            request.prompt_generation,
+            request.top_k,
+            request.temperature,
+            request.threshold,
+            request.embeddings,
+            request.text_chunks,
+            request.llm,
         )
         
         # Проверяем на ошибки
@@ -47,15 +57,9 @@ async def process_rag_request(request: RAGRequest):
             logger.error(f"RAG processing error: {result['error']}")
             raise HTTPException(status_code=400, detail=result["error"])
         
-        logger.info(f"RAG request processed successfully for chat_id: {request.chat_id}")
+        logger.info(f"RAG request processed for chat_id: {request.chat_id}")
         
-        return RAGResponse(
-            chat_id=result["chat_id"],
-            message_id=result["message_id"],
-            assistant_message=result["assistant_message"],
-            retrieved_chunks=result["retrieved_chunks"],
-            similarity_scores=result["similarity_scores"]
-        )
+        return result
         
     except HTTPException:
         raise

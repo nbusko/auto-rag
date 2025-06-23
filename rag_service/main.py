@@ -32,8 +32,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logger.info("Initializing RAG Service...")
-rag_pipeline = RAGPipeline()
 logger.info("RAG Service initialized successfully")
 
 @app.on_event("startup")

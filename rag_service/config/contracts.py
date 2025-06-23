@@ -2,7 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from enum import Enum
 from uuid import UUID
-from config.rag_settings import AppConfig
+from rag_settings import AppConfig
+from constants import MAP_REDUCE_PROMPT, GENERATE_FINAL_ANSWER_PROMPT, RETRIEVE_PROMPT
 
 config = AppConfig()
 
@@ -14,39 +15,40 @@ class RAGRequest(BaseModel):
     )
 
     prompt_retrieve: Optional[str] = Field(
-        default=config.prompt_retrieve,
+        default=RETRIEVE_PROMPT,
         description="Промпт для retrieval"
     )
     prompt_augmentation: Optional[str] = Field(
-        default=config.prompt_augmentation,
+        default=MAP_REDUCE_PROMPT,
         description="Промпт для расширения запроса"
     )
     prompt_generation: Optional[str] = Field(
-        default=config.prompt_generation,
+        default=GENERATE_FINAL_ANSWER_PROMPT,
         description="Промпт для генерации ответа"
     )
 
     top_k: Optional[int] = Field(
-        default=config.top_k,
+        default=12,
         ge=1,
         description="Сколько документов возвращает retriever"
     )
     temperature: Optional[float] = Field(
-        default=config.temperature,
+        default=0.7,
         ge=0.0,
         le=1.0,
         description="Температура генерации LLM"
     )
     threshold: Optional[float] = Field(
-        default=config.threshold,
+        default=0.0,
         ge=0.0,
         le=1.0,
         description="Порог для фильтрации по similarity"
     )
 
     document_id: UUID = Field(..., description="ID документов, к которым привязан чат/пользователь")
+
     llm: Optional[str] = Field(
-        default=config.llm,
+        default="gpt-4o-mini",
         description="Имя LLM, используемой для генерации"
     )
     
@@ -74,16 +76,7 @@ class RAGResponse(BaseModel):
     )
     document_id: str = Field(..., description="ID документа из запроса")
     
-    # retrieved_texts: Optional[list[str]] = Field(
-    #     default=None,
-    #     description="Список найденных релевантных отрывков текста"
-    # )
-
     generated_answer: Optional[str] = Field(
         default=None,
         description="Сгенерированный ответ системы"
     )
-    # debug_info: Optional[dict] = Field(
-    #     default=None,
-    #     description="Дополнительная отладочная информация"
-    # )

@@ -1,13 +1,11 @@
 ﻿using AutoRag.Application.Interfaces;
 using AutoRag.Application.Mappers;
 using AutoRag.Application.Services;
-using AutoRag.Domain.Interfaces.Factories;
 using AutoRag.Domain.Interfaces.Repositories;
 using AutoRag.Infrastructure.External.FastApi;
 using AutoRag.Infrastructure.Factories;
 using AutoRag.Infrastructure.Persistence;
 using AutoRag.Infrastructure.Repositories;
-using AutoRag.Infrastructure.ServicesStub;
 using AutoRag.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -21,7 +19,7 @@ var cfg = builder.Configuration;
 var connectionString =
         cfg.GetConnectionString("DefaultConnection") ??
         cfg.GetConnectionString("Pg") ??
-        throw new InvalidOperationException("Connection string not found: specify ConnectionStrings:DefaultConnection or Pg");
+        throw new InvalidOperationException("Connection string not found");
 
 builder.Services.AddDbContext<AutoRagContext>(o => o.UseNpgsql(connectionString));
 
@@ -31,42 +29,39 @@ builder.Services.Configure<MinioSettings>(cfg.GetSection("Minio"));
 builder.Services.AddSingleton<IMinioClient>(sp =>
 {
     var opt = sp.GetRequiredService<IOptions<MinioSettings>>().Value;
+    var uri = new Uri(opt.Endpoint, UriKind.Absolute);
+    var host = uri.IsDefaultPort ? uri.Host : $"{uri.Host}:{uri.Port}";
+    var useSsl = uri.Scheme == Uri.UriSchemeHttps;
 
-    // убираем схему и определяем, нужен ли SSL
-    var endpointUri = new Uri(opt.Endpoint, UriKind.Absolute);
-    var hostPort    = endpointUri.IsDefaultPort
-                        ? endpointUri.Host
-                        : $"{endpointUri.Host}:{endpointUri.Port}";
-    var useSsl      = endpointUri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
-
-    var clientBuilder = new MinioClient()
-        .WithEndpoint(hostPort)
+    var c = new MinioClient()
+        .WithEndpoint(host)
         .WithCredentials(opt.AccessKey, opt.SecretKey);
 
-    if (useSsl)
-        clientBuilder = clientBuilder.WithSSL();
-
-    return clientBuilder.Build();
+    if (useSsl) c = c.WithSSL();
+    return c.Build();
 });
 
-/* ---------- DI ---------- */
-builder.Services.AddScoped<IYearDataRepository, YearDataRepository>();
-builder.Services.AddScoped<IRagConfigRepository, RagConfigRepository>();
-builder.Services.AddScoped<IRepositoryFactory, RepositoryFactory>();
+/* ---------- Repositories ---------- */
+builder.Services.AddScoped<IYearDataRepository,     YearDataRepository>();
+builder.Services.AddScoped<IRagConfigRepository,    RagConfigRepository>();
+builder.Services.AddScoped<IChatHistoryRepository,  ChatHistoryRepository>();
 
+/* ---------- External clients ---------- */
 builder.Services.AddHttpClient<IExternalWeatherService, ExternalWeatherClient>(c =>
     c.BaseAddress = new Uri(cfg["ExternalApis:Weather"]!));
 
+builder.Services.AddHttpClient<IAssistantService, AssistantClient>(c =>
+    c.BaseAddress = new Uri(cfg["ExternalApis:Assistant"]!));
+
+/* ---------- Services ---------- */
 builder.Services.AddScoped<IYearDataService, YearDataService>();
 builder.Services.AddScoped<IRagConfigService, RagConfigService>();
+builder.Services.AddScoped<IChatService,      ChatService>();
 builder.Services.AddSingleton<IFileStorageService, MinioFileStorageService>();
 
-/* ---- stubs ---- */
-builder.Services.AddScoped<IChatService,    ChatServiceStub>();
-builder.Services.AddScoped<IAccountService, AccountServiceStub>();
-builder.Services.AddScoped<IAuthService,    AuthServiceStub>();
-
-builder.Services.AddScoped<IServiceFactory, ServiceFactory>();
+/* ---- заглушки ---- */
+builder.Services.AddScoped<IAccountService, AutoRag.Infrastructure.ServicesStub.AccountServiceStub>();
+builder.Services.AddScoped<IAuthService,    AutoRag.Infrastructure.ServicesStub.AuthServiceStub>();
 
 /* ---------- misc ---------- */
 builder.Services.AddAutoMapper(typeof(YearDataProfile).Assembly);
@@ -76,10 +71,8 @@ builder.Services.AddServerSideBlazor();
 
 var app = builder.Build();
 
-/* ---------- HTTP pipeline ---------- */
 app.UseStaticFiles();
 app.UseRouting();
-
 app.MapBlazorHub();
 app.MapRazorPages();
 app.MapFallbackToPage("/_Host");

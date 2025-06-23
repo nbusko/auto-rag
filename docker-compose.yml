@@ -3,19 +3,15 @@ services:
     image: pgvector/pgvector:pg16
     container_name: auto-rag-db-1
     restart: unless-stopped
-
     environment:
       POSTGRES_DB: ragdb
       POSTGRES_USER: raguser
       POSTGRES_PASSWORD: ragpass
-
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
-
     ports:
       - "15434:5432"
-
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U raguser -d ragdb"]
       interval: 10s
@@ -34,8 +30,17 @@ services:
     volumes:
       - minio-data:/data
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # Console UI
+      - "9000:9000"
+      - "9001:9001"
+
+  assistant:
+    build:
+      context: ./assistant
+      dockerfile: Dockerfile
+    container_name: auto-rag-assistant-1
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
 
   web:
     build:
@@ -47,7 +52,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
-
+      assistant:
+        condition: service_started
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=ragdb;Username=raguser;Password=ragpass
@@ -55,7 +61,7 @@ services:
       Minio__AccessKey: minio
       Minio__SecretKey: minio123
       Minio__Bucket: autorag
-
+      ExternalApis__Assistant: http://assistant:8000
     ports:
       - "8080:8080"
 

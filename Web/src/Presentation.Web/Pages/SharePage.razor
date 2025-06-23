@@ -1,0 +1,130 @@
+@page "/share"
+@using AutoRag.Application.DTOs
+@using AutoRag.Application.Interfaces
+@inject IShareService   ShareSvc
+@inject ISnackbar       Snackbar
+@inject NavigationManager Nav
+@inject IJSRuntime      Js
+@using MudBlazor
+
+<PageTitle>Share</PageTitle>
+
+<MudPaper Class="pa-4 mx-auto" Style="max-width:700px">
+    <MudText Typo="Typo.h5">Share RAG workspace</MudText>
+
+    <!-- переключатель публичной ссылки -->
+    <MudSwitch T="bool"
+               Checked="_enabled"
+               CheckedChanged="OnSwitchChanged"
+               Color="Color.Primary">
+        Enable&nbsp;public&nbsp;link
+    </MudSwitch>
+
+    <MudTextField T="string"
+                  ReadOnly="true"
+                  Label="Share link"
+                  Value="@_shareUrl"
+                  Class="w-100" />
+
+    <MudButton Variant="Variant.Outlined"
+               Color="Color.Primary"
+               OnClick="CopyLink">
+        Copy&nbsp;to&nbsp;clipboard
+    </MudButton>
+
+    <MudDivider Class="my-4" />
+
+    <!-- участники -->
+    <MudText Typo="Typo.h6">Members</MudText>
+
+    <MudTable Items="_users" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh />
+        </HeaderContent>
+        <RowTemplate Context="u">
+            <MudTd>@u.FullName</MudTd>
+            <MudTd>@u.Email</MudTd>
+            <MudTd Class="text-end">
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               OnClick="() => Remove(u.Id)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <!-- ручное добавление -->
+    <MudExpansionPanels Class="mt-3">
+        <MudExpansionPanel Text="Add member manually">
+            <MudForm @ref="_addForm">
+                <MudTextField @bind-Value="_add.FullName" Label="Full name" Required="true" />
+                <MudTextField @bind-Value="_add.Email"    Label="Email"      Required="true" />
+                <MudTextField @bind-Value="_add.Password" Label="Password"   InputType="InputType.Password" Required="true" />
+                <MudButton Color="Color.Primary" OnClick="AddUser">Add</MudButton>
+            </MudForm>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+</MudPaper>
+
+@code {
+    private ShareLinkDto _link = new(Guid.Empty, true, DateTime.UtcNow);
+    private bool   _enabled;
+    private string _shareUrl = string.Empty;
+
+    private List<SubUserDto> _users = [];
+    private CreateSubUserDto _add   = new();
+    private MudForm _addForm = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _link     = await ShareSvc.GetOrCreateLinkAsync();
+        _enabled  = _link.Enabled;
+        _shareUrl = $"{Nav.BaseUri}auth?token={_link.Token}";
+        _users    = (await ShareSvc.ListUsersAsync()).ToList();
+    }
+
+    /* смена статуса ссылки */
+    private async Task OnSwitchChanged(bool value)
+    {
+        _enabled = value;
+        await ShareSvc.EnableLinkAsync(value);
+        Snackbar.Add(value ? "Public link enabled" : "Public link disabled", Severity.Info);
+    }
+
+    /* копирование */
+    private async Task CopyLink()
+    {
+        await Js.InvokeVoidAsync("navigator.clipboard.writeText", _shareUrl);
+        Snackbar.Add("Copied", Severity.Success);
+    }
+
+    /* добавление участника */
+    private async Task AddUser()
+    {
+        await _addForm.Validate();
+        if (!_addForm.IsValid) return;
+
+        if (await ShareSvc.AddUserAsync(_add))
+        {
+            Snackbar.Add("User added", Severity.Success);
+            _users = (await ShareSvc.ListUsersAsync()).ToList();
+            _add = new();   // очистить форму
+        }
+        else
+        {
+            Snackbar.Add("Failed to add", Severity.Error);
+        }
+    }
+
+    /* удаление */
+    private async Task Remove(string id)
+    {
+        if (await ShareSvc.RemoveUserAsync(id))
+        {
+            Snackbar.Add("Removed", Severity.Info);
+            _users = (await ShareSvc.ListUsersAsync()).ToList();
+        }
+    }
+}

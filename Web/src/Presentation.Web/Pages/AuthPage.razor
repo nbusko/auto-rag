@@ -3,8 +3,10 @@
 @using AutoRag.Application.DTOs
 @using AutoRag.Application.Interfaces
 @using AutoRag.Presentation.Web.ViewModels
-@inject IAuthService AuthSvc
-@inject NavigationManager Nav
+@inject IAuthService       AuthSvc
+@inject NavigationManager  Nav
+@using MudBlazor
+@using Microsoft.AspNetCore.Components
 
 <PageTitle>Authentication</PageTitle>
 
@@ -12,14 +14,12 @@
 
 <div class="auth-container d-flex justify-center align-center">
     <MudPaper Class="pa-6" Style="max-width:450px; width:100%">
-        <MudTabs ActivePanelIndex="_tabIndex"
-                 OnActivePanelIndexChanged="TabChanged"
-                 Rounded="true">
+        <MudTabs @bind-ActivePanelIndex="_tabIndex" Rounded="true">
 
             <MudTabPanel Text="Register">
                 <MudForm @ref="_regForm">
                     <MudTextField @bind-Value="_vm.FullName" Label="Full name" Required="true" />
-                    <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" />
+                    <MudTextField @bind-Value="_vm.Email"    Label="Email"      Required="true" />
                     <MudTextField @bind-Value="_vm.Password" Label="Password"
                                    InputType="InputType.Password" Required="true" />
                     <div class="d-flex justify-center mt-4">
@@ -33,7 +33,7 @@
 
             <MudTabPanel Text="Login">
                 <MudForm @ref="_loginForm">
-                    <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" />
+                    <MudTextField @bind-Value="_vm.Email"    Label="Email"      Required="true" />
                     <MudTextField @bind-Value="_vm.Password" Label="Password"
                                    InputType="InputType.Password" Required="true" />
                     <div class="d-flex justify-center mt-4">
@@ -50,6 +50,9 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "token")]
+    public Guid? Token { get; set; }               // токен расшаренной ссылки
+
     private readonly AuthPageVm _vm = new();
     private int _tabIndex;
 
@@ -67,17 +70,17 @@
         }
     </div>;
 
-    private void TabChanged(int idx) { _tabIndex = idx; }
-
     private async Task Register()
     {
         await _regForm.Validate();
         if (!_regForm.IsValid) return;
 
         _vm.IsBusy = true;
-        var res = await AuthSvc.RegisterAsync(new RegisterDto(_vm.FullName!, _vm.Email, _vm.Password));
+        var res = await AuthSvc.RegisterAsync(
+            new RegisterDto(_vm.FullName!, _vm.Email, _vm.Password),
+            Token);
         _vm.Message = res.Message;
-        _vm.IsBusy = false;
+        _vm.IsBusy  = false;
 
         if (!string.IsNullOrEmpty(res.UserId))
             Nav.NavigateTo("/home");
@@ -91,7 +94,7 @@
         _vm.IsBusy = true;
         var res = await AuthSvc.LoginAsync(new LoginDto(_vm.Email, _vm.Password));
         _vm.Message = res.Message;
-        _vm.IsBusy = false;
+        _vm.IsBusy  = false;
 
         if (!string.IsNullOrEmpty(res.UserId))
             Nav.NavigateTo("/home");
@@ -99,7 +102,5 @@
 }
 
 <style>
-    .auth-container {
-        height: 100vh;
-    }
+    .auth-container { height: 100vh; }
 </style>

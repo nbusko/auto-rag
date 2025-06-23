@@ -15,6 +15,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(x => x.Email).HasColumnName("email");
         b.Property(x => x.Organization).HasColumnName("organization");
         b.Property(x => x.RagId).HasColumnName("rag_id");
+        b.Property(x => x.Role).HasColumnName("role");
 
         b.HasOne(x => x.Credential)
          .WithOne(c => c.User)

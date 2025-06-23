@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS users
     full_name    text      NOT NULL,
     email        text      NOT NULL UNIQUE,
     organization text,
-    rag_id       uuid      NOT NULL
+    rag_id       uuid      NOT NULL,
+    role         text      NOT NULL DEFAULT 'owner'
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS chat_history
     rag_id       uuid NOT NULL,
     message_id   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     message_type text NOT NULL CHECK (message_type IN ('assistant', 'user')),
+    user_id      uuid,
     text         text NOT NULL
 );
 
@@ -31,6 +33,15 @@ CREATE TABLE IF NOT EXISTS rag_settings
     rag_id      uuid PRIMARY KEY,
     prompt      text    NOT NULL,
     document_id uuid
+);
+
+-- ---------- NEW : public share links ------------
+CREATE TABLE IF NOT EXISTS share_links
+(
+    token      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    rag_id     uuid NOT NULL,
+    enabled    boolean NOT NULL DEFAULT true,
+    created_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS document_embeddings

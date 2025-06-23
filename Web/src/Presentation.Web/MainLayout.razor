@@ -1,27 +1,66 @@
-﻿@namespace AutoRag.Presentation.Web.Shared
+﻿@using MudBlazor
+@using AutoRag.Application.Interfaces
 @inherits LayoutComponentBase
-@using MudBlazor
+@inject ICurrentUser Cur
+
+<MudThemeProvider Theme="_theme" @bind-IsDarkMode="_isDark" />
 
 <MudLayout>
-
-    <MudAppBar Color="Color.Primary">
+    <MudAppBar Color="Color.Primary" Dense="true" Fixed="false">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="ToggleDrawer" />
         <MudText Typo="Typo.h6" Class="ml-2">AutoRag</MudText>
     </MudAppBar>
 
-    <MudDrawer Open="true">
-        <MudNavMenu>
-            <MudNavLink Href="" Match="NavLinkMatch.All"
-                        Icon="@Icons.Material.Filled.Home">
-                Home
+    <MudDrawer Elevation="1" Open="_drawerOpen">
+        <MudNavMenu Dense="true">
+            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Logout" Match="NavLinkMatch.All">
+                Log&nbsp;off
             </MudNavLink>
 
-            <MudNavLink Href="year-report"
-                        Icon="@Icons.Material.Filled.Assessment">
-                Year report
-            </MudNavLink>
+            @if (Cur.IsOwner)
+            {
+                <MudNavLink Href="/home"        Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+                <MudNavLink Href="documents"    Icon="@Icons.Material.Filled.Description">Documents</MudNavLink>
+                <MudNavLink Href="rag-settings" Icon="@Icons.Material.Filled.Settings">RAG&nbsp;Settings</MudNavLink>
+                <MudNavLink Href="share"        Icon="@Icons.Material.Filled.Group">Share</MudNavLink>
+            }
+
+            <MudNavLink Href="chat" Icon="@Icons.Material.Filled.Chat">Chat</MudNavLink>
+
+            @if (Cur.IsOwner)
+            {
+                <MudNavLink Href="account" Icon="@Icons.Material.Filled.Person">Account</MudNavLink>
+            }
         </MudNavMenu>
     </MudDrawer>
 
-    <MudMainContent Class="pa-4">@Body</MudMainContent>
-
+    <MudMainContent Class="pa-4">
+        @Body
+    </MudMainContent>
 </MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDark;
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary          = Colors.Blue.Default,
+            Secondary        = Colors.Green.Accent4,
+            AppbarBackground = Colors.Blue.Darken1
+        },
+        PaletteDark = new PaletteDark
+        {
+            Primary          = Colors.Blue.Lighten3,
+            Secondary        = Colors.Lime.Accent3,
+            AppbarBackground = Colors.BlueGray.Darken4
+        }
+    };
+}

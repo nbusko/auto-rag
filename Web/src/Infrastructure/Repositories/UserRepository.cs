@@ -2,7 +2,6 @@ using AutoRag.Domain.Entities;
 using AutoRag.Domain.Interfaces.Repositories;
 using AutoRag.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using BCrypt.Net;
 
 namespace AutoRag.Infrastructure.Repositories;
 
@@ -32,14 +31,37 @@ public sealed class UserRepository : IUserRepository
     public async Task<bool> ValidateCredentialsAsync(string email, string password, CancellationToken ct = default)
     {
         var user = await GetByEmailAsync(email, ct);
-        if (user is null) return false;
-
-        return BCrypt.Net.BCrypt.Verify(password, user.Credential.PasswordHash);
+        return user is not null && BCrypt.Net.BCrypt.Verify(password, user.Credential.PasswordHash);
     }
 
     public async Task UpdateAsync(User user, CancellationToken ct = default)
     {
         _ctx.Users.Update(user);
+        await _ctx.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdatePasswordAsync(Guid userId, string newHash, CancellationToken ct = default)
+    {
+        var cred = await _ctx.UserCredentials.FirstOrDefaultAsync(c => c.UserId == userId, ct)
+                   ?? throw new KeyNotFoundException();
+        cred.PasswordHash = newHash;
+        _ctx.UserCredentials.Update(cred);
+        await _ctx.SaveChangesAsync(ct);
+    }
+
+    /* ---------------- share-support ---------------- */
+
+    public async Task<IReadOnlyList<User>> GetByRagIdAsync(Guid ragId, CancellationToken ct = default)
+        => await _ctx.Users.AsNoTracking()
+                           .Where(u => u.RagId == ragId)
+                           .ToListAsync(ct);
+
+    public async Task DeleteAsync(Guid userId, CancellationToken ct = default)
+    {
+        var user = await _ctx.Users.FindAsync(new object?[] { userId }, ct);
+        if (user is null) return;
+
+        _ctx.Users.Remove(user);
         await _ctx.SaveChangesAsync(ct);
     }
 }

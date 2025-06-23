@@ -13,6 +13,7 @@ internal sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMe
         b.Property(x => x.Id).HasColumnName("message_id");
         b.Property(x => x.RagId).HasColumnName("rag_id");
         b.Property(x => x.MessageType).HasColumnName("message_type");
+        b.Property(x => x.UserId).HasColumnName("user_id");
         b.Property(x => x.Text).HasColumnName("text");
     }
 }

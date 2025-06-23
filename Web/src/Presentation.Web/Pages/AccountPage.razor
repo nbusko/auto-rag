@@ -13,6 +13,14 @@
         <MudTextField T="string" Label="Full name" @bind-Value="_dto.FullName" Required="true" />
         <MudTextField T="string" Label="Email" @bind-Value="_dto.Email" Disabled="true" />
         <MudTextField T="string" Label="Organization" @bind-Value="_dto.Organization" />
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.subtitle2">Change password</MudText>
+        <MudTextField @bind-Value="_currentPass" Label="Current password" InputType="InputType.Password" />
+        <MudTextField @bind-Value="_newPass"     Label="New password"     InputType="InputType.Password" />
+        <MudTextField @bind-Value="_newPass2"    Label="Repeat new password" InputType="InputType.Password" />
+
         <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
     </MudForm>
 </MudPaper>
@@ -20,6 +28,8 @@
 @code {
     private AccountDto _dto = new();
     private MudForm _form = default!;
+
+    private string _currentPass="", _newPass="", _newPass2="";
 
     protected override async Task OnInitializedAsync()
         => _dto = await AccSvc.GetAsync();
@@ -30,6 +40,24 @@
         if (!_form.IsValid) return;
 
         await AccSvc.UpdateAsync(_dto);
-        Snackbar.Add("Profile updated", Severity.Success);
+
+        if (!string.IsNullOrWhiteSpace(_newPass))
+        {
+            if (_newPass != _newPass2)
+            {
+                Snackbar.Add("Passwords do not match", Severity.Error);
+                return;
+            }
+
+            var ok = await AccSvc.ChangePasswordAsync(_currentPass,_newPass);
+            Snackbar.Add(ok ? "Password changed" : "Wrong current password",
+                         ok ? Severity.Success : Severity.Error);
+        }
+        else
+        {
+            Snackbar.Add("Profile updated", Severity.Success);
+        }
+
+        _currentPass=_newPass=_newPass2="";
     }
 }

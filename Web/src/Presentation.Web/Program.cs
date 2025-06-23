@@ -50,7 +50,7 @@ builder.Services.AddScoped<IUserRepository,          UserRepository>();
 builder.Services.AddScoped<IYearDataRepository,      YearDataRepository>();
 builder.Services.AddScoped<IRagConfigRepository,     RagConfigRepository>();
 builder.Services.AddScoped<IChatHistoryRepository,   ChatHistoryRepository>();
-
+builder.Services.AddScoped<IShareLinkRepository, ShareLinkRepository>();
 /* ---------- External clients ---------- */
 builder.Services.AddHttpClient<IExternalWeatherService, ExternalWeatherClient>(c =>
     c.BaseAddress = new Uri(cfg["ExternalApis:Weather"]!));
@@ -65,6 +65,7 @@ builder.Services.AddScoped<IYearDataService,   YearDataService>();
 builder.Services.AddScoped<IRagConfigService,  RagConfigService>();
 builder.Services.AddScoped<IChatService,       ChatService>();
 builder.Services.AddScoped<IFileStorageService, MinioFileStorageService>();   // теперь scoped
+builder.Services.AddScoped<IShareService,        ShareService>();
 
 /* ---------- misc ---------- */
 builder.Services.AddAutoMapper(typeof(YearDataProfile).Assembly);

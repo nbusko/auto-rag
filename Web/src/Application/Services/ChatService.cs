@@ -25,8 +25,10 @@ public sealed class ChatService : IChatService
             Id          = Guid.NewGuid(),
             RagId       = RagId,
             MessageType = "user",
+            UserId      = _current.UserId,
             Text        = req.Message
         };
+
         await _repo.AddAsync(userMsg, ct);
 
         var answer = await _assistant.GetAnswerAsync(userMsg.Id, ct);
@@ -36,8 +38,10 @@ public sealed class ChatService : IChatService
             Id          = Guid.NewGuid(),
             RagId       = RagId,
             MessageType = "assistant",
+            UserId      = null,
             Text        = answer
         };
+        
         await _repo.AddAsync(assistantMsg, ct);
 
         return new ChatResponseDto(answer);

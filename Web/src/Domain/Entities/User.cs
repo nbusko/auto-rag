@@ -8,6 +8,7 @@ public sealed class User : BaseEntity<Guid>
     public string Email        { get; set; } = string.Empty;
     public string? Organization{ get; set; }
     public Guid RagId          { get; set; }
+    public string Role         { get; set; } = "owner"; // 'owner' | 'member'
 
     public UserCredential Credential { get; set; } = null!;
 }

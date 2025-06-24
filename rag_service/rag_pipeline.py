@@ -13,6 +13,7 @@ from embedding_search import EmbeddingSearcher
 logger = logging.getLogger(__name__)
 app_config = AppConfig()
 
+
 class RAGPipeline:
     def __init__(self, config: AppConfig = app_config):
         self.config = config
@@ -34,7 +35,7 @@ class RAGPipeline:
             temperature=temperature,
             base_url=str(self.config.OPENAI_BASE_URL),
         )
-     
+
         self.filter_prompt = PromptTemplate(
             input_variables=["request"],
             template=FILTER_BAD_REQUEST_PROMPT,
@@ -51,7 +52,7 @@ class RAGPipeline:
             input_variables=["request", "info"],
             template=prompt_generation,
         )
-     
+
         self.filter_chain = LLMChain(llm=self.llm, prompt=self.filter_prompt)
         self.retrieve_chain = LLMChain(llm=self.llm, prompt=self.retrieve_prompt)
         self.map_reduce_chain = LLMChain(llm=self.llm, prompt=self.map_reduce_prompt)
@@ -75,10 +76,15 @@ class RAGPipeline:
         text_chunks: List[str],
     ) -> RAGResponse:
         try:
-           
-            await self._init_llm(llm_model, temperature, prompt_retrieve, prompt_augmentation, prompt_generation)
 
-       
+            await self._init_llm(
+                llm_model,
+                temperature,
+                prompt_retrieve,
+                prompt_augmentation,
+                prompt_generation,
+            )
+
             logger.debug("Filtering user request")
             filter_output = await self.filter_chain.apredict(request=user_message)
             filter_json = json.loads(filter_output)
@@ -90,16 +96,16 @@ class RAGPipeline:
                     chat_id=chat_id,
                     message_id=message_id,
                     document_id=document_id,
-                    generated_answer=IS_BAD_ANSWER
+                    generated_answer=IS_BAD_ANSWER,
                 )
 
-        
             logger.debug("Transforming user query")
             improved_query = await self.retrieve_chain.apredict(request=user_message)
 
-         
             logger.debug("Embedding and searching for relevant chunks")
-            query_emb = self.embedder.encode(improved_query, normalize_embeddings=True).tolist()
+            query_emb = self.embedder.encode(
+                improved_query, normalize_embeddings=True
+            ).tolist()
             searcher = EmbeddingSearcher(embeddings, text_chunks)
             raw_segments = searcher.search(query_emb, top_k, threshold)
             if not raw_segments:
@@ -110,23 +116,26 @@ class RAGPipeline:
                     chat_id=chat_id,
                     message_id=message_id,
                     document_id=document_id,
-                    generated_answer=IS_NO_ANSWER
+                    generated_answer=IS_NO_ANSWER,
                 )
 
-    
             logger.debug("Applying map-reduce to select best segments")
             selected_segments: List[str] = []
             batch_size = 3
             for i in range(0, len(raw_segments), batch_size):
                 batch = raw_segments[i : i + batch_size]
                 info = "\n".join(batch)
-                map_out = await self.map_reduce_chain.apredict(request=user_message, info=info)
+                map_out = await self.map_reduce_chain.apredict(
+                    request=user_message, info=info
+                )
                 try:
                     picks = json.loads(map_out)
                     if isinstance(picks, list):
                         selected_segments.extend(picks)
                 except json.JSONDecodeError:
-                    logger.error("Map-reduce output is not valid JSON list: %s", map_out)
+                    logger.error(
+                        "Map-reduce output is not valid JSON list: %s", map_out
+                    )
             if not selected_segments:
                 logger.info("Map-reduce did not yield any segments")
                 return RAGResponse(
@@ -135,12 +144,14 @@ class RAGPipeline:
                     chat_id=chat_id,
                     message_id=message_id,
                     document_id=document_id,
-                    generated_answer=IS_NO_ANSWER
+                    generated_answer=IS_NO_ANSWER,
                 )
 
             logger.debug("Generating final answer")
             info_for_gen = "\n".join(selected_segments)
-            generated = await self.generate_chain.apredict(request=user_message, info=info_for_gen)
+            generated = await self.generate_chain.apredict(
+                request=user_message, info=info_for_gen
+            )
 
             return RAGResponse(
                 status=Status.SUCCESS,

@@ -4,7 +4,7 @@ import os
 
 API_URL = "http://localhost:8000/api/v1/documents/process"
 
-# Пример тестовых файлов (замените на свои пути)
+# Пример тестовых файлов (заменить на свои пути)
 TEST_FILES = [
     ("test_doc.docx", "batch"),
     ("test_text.txt", "llm"),
@@ -12,7 +12,14 @@ TEST_FILES = [
     # ("test_pdf.pdf", "batch"),
 ]
 
-def test_document_processor(file_path, split_method="batch", batch_size=1000, llm_model="gpt-4o-mini", temperature=0.1):
+
+def test_document_processor(
+    file_path,
+    split_method="batch",
+    batch_size=1000,
+    llm_model="gpt-4o-mini",
+    temperature=0.1,
+):
     document_id = str(uuid.uuid4())
     with open(file_path, "rb") as f:
         files = {"document": (os.path.basename(file_path), f)}
@@ -35,9 +42,12 @@ def test_document_processor(file_path, split_method="batch", batch_size=1000, ll
             return
         print(f"Ответ: {resp_json}")
         if resp_json.get("status") == "success":
-            print(f"\033[92mУспех! Чанков: {resp_json.get('chunks_count')}, Время: {resp_json.get('processing_time'):.2f} сек\033[0m")
+            print(
+                f"\033[92mУспех! Чанков: {resp_json.get('chunks_count')}, Время: {resp_json.get('processing_time'):.2f} сек\033[0m"
+            )
         else:
             print(f"\033[91mОшибка: {resp_json.get('message')}\033[0m")
+
 
 def main():
     for file_path, split_method in TEST_FILES:
@@ -46,5 +56,6 @@ def main():
             continue
         test_document_processor(file_path, split_method=split_method)
 
+
 if __name__ == "__main__":
-    main() 
+    main()

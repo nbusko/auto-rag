@@ -2,6 +2,7 @@ import faiss
 import numpy as np
 from typing import List
 
+
 class EmbeddingSearcher:
     def __init__(self, embeddings: List[List[float]], texts: List[str]):
         """
@@ -11,8 +12,12 @@ class EmbeddingSearcher:
         self.embeddings = np.array(embeddings).astype("float32")
         self.texts = texts
 
-        assert self.embeddings.shape[0] == len(self.texts), "Число эмбеддингов и текстов должно совпадать"
-        assert self.embeddings.shape[1] == 312, "Размерность эмбеддингов должна быть 312"
+        assert self.embeddings.shape[0] == len(
+            self.texts
+        ), "Число эмбеддингов и текстов должно совпадать"
+        assert (
+            self.embeddings.shape[1] == 312
+        ), "Размерность эмбеддингов должна быть 312"
 
         self.index = self._build_index(self.embeddings)
 
@@ -22,10 +27,7 @@ class EmbeddingSearcher:
         return index
 
     def search(
-        self,
-        query_embedding: List[float],
-        top_k: int,
-        threshold: float 
+        self, query_embedding: List[float], top_k: int, threshold: float
     ) -> List[str]:
         """
         Выполняет поиск по cosine similarity (dot product).

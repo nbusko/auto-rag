@@ -16,9 +16,12 @@ public sealed class ChatHistoryRepository : IChatHistoryRepository
         await _ctx.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ChatMessage>> GetByRagIdAsync(Guid ragId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ChatMessage>> GetByRagAndUserAsync(
+        Guid ragId,
+        Guid userId,
+        CancellationToken ct = default)
         => await _ctx.ChatMessages.AsNoTracking()
-               .Where(x => x.RagId == ragId)
+               .Where(x => x.RagId == ragId && x.UserId == userId)
                .OrderBy(x => x.Id)
                .ToListAsync(ct);
 }

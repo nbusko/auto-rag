@@ -8,6 +8,7 @@ import time
 import sys
 import uuid
 
+
 def test_health_check():
     """Тест health check эндпоинта"""
     print("🔍 Тестирование health check...")
@@ -23,6 +24,7 @@ def test_health_check():
     except requests.exceptions.RequestException as e:
         print(f"❌ Ошибка подключения: {e}")
         return False
+
 
 def test_root_endpoint():
     """Тест корневого эндпоинта"""
@@ -40,10 +42,11 @@ def test_root_endpoint():
         print(f"❌ Ошибка подключения: {e}")
         return False
 
+
 def test_rag_process():
     """Тест RAG process эндпоинта"""
     print("\n🔍 Тестирование RAG process...")
-    
+
     # Тестовые данные
     test_data = {
         "chat_id": str(uuid.uuid4()),
@@ -53,22 +56,20 @@ def test_rag_process():
         "text_chunks": ["Искусственный интеллект это нейросеть на стероидах" * 312],
         "top_k": 5,
         "temperature": 0.7,
-        "threshold": 0.0
+        "threshold": 0.0,
     }
-    
+
     try:
         response = requests.post(
-            "http://localhost:5050/api/v1/rag/process",
-            json=test_data,
-            timeout=30
+            "http://localhost:5050/api/v1/rag/process", json=test_data, timeout=30
         )
-        
+
         if response.status_code == 200:
             result = response.json()
             print("✅ RAG process работает")
             print(f"   Статус: {result.get('status')}")
             print(f"   Сообщение: {result.get('message')}")
-            if result.get('generated_answer'):
+            if result.get("generated_answer"):
                 print(f"   Ответ: {result.get('generated_answer')[:100]}...")
             return True
         else:
@@ -78,6 +79,7 @@ def test_rag_process():
     except requests.exceptions.RequestException as e:
         print(f"❌ Ошибка подключения: {e}")
         return False
+
 
 def test_swagger_ui():
     """Тест доступности Swagger UI"""
@@ -94,33 +96,29 @@ def test_swagger_ui():
         print(f"❌ Ошибка подключения: {e}")
         return False
 
+
 def main():
     """Основная функция тестирования"""
     print("🚀 Запуск тестов RAG сервиса...")
     print("=" * 50)
-    
+
     # Ждем немного для запуска сервиса
     print("⏳ Ожидание запуска сервиса...")
     time.sleep(5)
-    
-    tests = [
-        test_health_check,
-        test_root_endpoint,
-        test_swagger_ui,
-        test_rag_process
-    ]
-    
+
+    tests = [test_health_check, test_root_endpoint, test_swagger_ui, test_rag_process]
+
     passed = 0
     total = len(tests)
-    
+
     for test in tests:
         if test():
             passed += 1
         time.sleep(1)  # Небольшая пауза между тестами
-    
+
     print("\n" + "=" * 50)
     print(f"📊 Результаты тестирования: {passed}/{total} тестов прошли успешно")
-    
+
     if passed == total:
         print("🎉 Все тесты прошли успешно! Сервис работает корректно.")
         return 0
@@ -128,5 +126,6 @@ def main():
         print("⚠️  Некоторые тесты не прошли. Проверьте логи сервиса.")
         return 1
 
+
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())

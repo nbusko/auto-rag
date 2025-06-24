@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install poppler-utils -y
+RUN apt-get update && apt-get install -y libmagic1
+
 RUN pip install --upgrade pip setuptools wheel
 
 COPY requirements.txt .

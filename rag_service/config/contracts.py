@@ -68,7 +68,7 @@ class Status(str, Enum):
 
 class RAGResponse(BaseModel):
     status: Status = Field(..., description="Статус выполнения запроса (success/error)")
-    message: str = Field(..., description="Сообщение с ответом или описанием ошибки")
+    message: str = Field(..., description="Сообщение со скриптом результата")
     chat_id: str = Field(..., description="ID чата пользователя из запроса")
     message_id: Optional[str] = Field(
         default=None, 

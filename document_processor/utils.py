@@ -8,7 +8,11 @@ from pdf2image import convert_from_bytes
 import base64
 from PIL import Image
 import openai
-from app.config import settings
+import logging
+from config.app_settings import AppConfig
+
+logger = logging.getLogger(__name__)
+app_config = AppConfig()
 
 async def process_file(byte_data):
     estimator_dict = {
@@ -21,6 +25,7 @@ async def process_file(byte_data):
     }
     file_type = await detect_file_type(byte_data)
     if file_type == "unknown":
+        logger.warning("Unknown file type detected")
         return "txt", ["unknown"]
     estimator = estimator_dict[file_type]
     data = await estimator(byte_data)
@@ -41,7 +46,9 @@ async def detect_file_type(byte_data):
         "image/bmp": "image",
         "image/tiff": "image"
     }
-    return mime_types.get(mime.from_buffer(byte_data), "unknown")
+    detected_type = mime_types.get(mime.from_buffer(byte_data), "unknown")
+    logger.info(f"Detected file type: {detected_type}")
+    return detected_type
 
 async def extract_text_from_docx(docx_bytes):
     doc = Document(BytesIO(docx_bytes))
@@ -99,6 +106,7 @@ async def process_xlsx(byte_data, max_length = 8000):
         row_text = " | ".join([str(val) for val in row.values if pd.notna(val)])
         rows.append(row_text)
     
+    logger.info(f"Processed Excel file with {len(rows)} rows")
     return rows
 
 async def process_pdf(byte_data):
@@ -107,7 +115,8 @@ async def process_pdf(byte_data):
     
     # Извлекаем текст из каждого изображения с помощью OCR
     texts = []
-    for img in pdf_imgs:
+    for i, img in enumerate(pdf_imgs):
+        logger.info(f"Processing PDF page {i+1}/{len(pdf_imgs)}")
         text = await extract_text_from_image(img)
         texts.append(text)
     
@@ -142,8 +151,8 @@ async def extract_text_from_image(image):
         
         # Используем OpenAI Vision API для OCR
         client = openai.OpenAI(
-            api_key=settings.openai_api_key,
-            base_url=settings.openai_base_url
+            api_key=app_config.OPENAI_API_KEY,
+            base_url=str(app_config.OPENAI_BASE_URL)
         )
         
         response = client.chat.completions.create(
@@ -171,7 +180,7 @@ async def extract_text_from_image(image):
         return response.choices[0].message.content
         
     except Exception as e:
-        print(f"Ошибка при OCR: {e}")
+        logger.error(f"Error during OCR: {e}")
         return ""
 
 async def convert_to_markdown(text):
@@ -180,8 +189,8 @@ async def convert_to_markdown(text):
     """
     try:
         client = openai.OpenAI(
-            api_key=settings.openai_api_key,
-            base_url=settings.openai_base_url
+            api_key=app_config.OPENAI_API_KEY,
+            base_url=str(app_config.OPENAI_BASE_URL)
         )
         
         prompt = f"""
@@ -205,5 +214,5 @@ async def convert_to_markdown(text):
         return response.choices[0].message.content
         
     except Exception as e:
-        print(f"Ошибка при конвертации в markdown: {e}")
+        logger.error(f"Error converting to markdown: {e}")
         return text

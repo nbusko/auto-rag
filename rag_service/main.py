@@ -1,10 +1,6 @@
 import logging
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.openapi.utils import get_openapi
-from datetime import datetime
-import os
 
 from router import router
 from config.logger import setup_logging
@@ -20,7 +16,7 @@ app = FastAPI(
     redoc_url=None,
 )
 
-# Добавляем CORS middleware
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Подключаем роутер
+
 app.include_router(router, prefix="/api/v1")
 
 logger.info("RAG Service initialized successfully")

@@ -1,13 +1,6 @@
-import os
-import uuid
 import logging
 import json
-from typing import Optional, List, Self, Any
-from uuid import UUID
-from pydantic import Field
-from pydantic import BaseModel
-import numpy as np
-import faiss
+from typing import Optional, List, Self
 from sentence_transformers import SentenceTransformer
 from langchain.prompts import PromptTemplate
 from langchain.chat_models import ChatOpenAI
@@ -41,7 +34,7 @@ class RAGPipeline:
             temperature=temperature,
             base_url=str(self.config.OPENAI_BASE_URL),
         )
-        # Prepare prompt templates
+     
         self.filter_prompt = PromptTemplate(
             input_variables=["request"],
             template=FILTER_BAD_REQUEST_PROMPT,
@@ -58,7 +51,7 @@ class RAGPipeline:
             input_variables=["request", "info"],
             template=prompt_generation,
         )
-        # Chains
+     
         self.filter_chain = LLMChain(llm=self.llm, prompt=self.filter_prompt)
         self.retrieve_chain = LLMChain(llm=self.llm, prompt=self.retrieve_prompt)
         self.map_reduce_chain = LLMChain(llm=self.llm, prompt=self.map_reduce_prompt)
@@ -82,10 +75,10 @@ class RAGPipeline:
         text_chunks: List[str],
     ) -> RAGResponse:
         try:
-            # Initialize LLM and prompts
+           
             await self._init_llm(llm_model, temperature, prompt_retrieve, prompt_augmentation, prompt_generation)
 
-            # 1. Filter request
+       
             logger.debug("Filtering user request")
             filter_output = await self.filter_chain.apredict(request=user_message)
             filter_json = json.loads(filter_output)
@@ -100,11 +93,11 @@ class RAGPipeline:
                     generated_answer=IS_BAD_ANSWER
                 )
 
-            # 2. Transform user query
+        
             logger.debug("Transforming user query")
             improved_query = await self.retrieve_chain.apredict(request=user_message)
 
-            # 3. Embed query and search
+         
             logger.debug("Embedding and searching for relevant chunks")
             query_emb = self.embedder.encode(improved_query, normalize_embeddings=True).tolist()
             searcher = EmbeddingSearcher(embeddings, text_chunks)
@@ -120,7 +113,7 @@ class RAGPipeline:
                     generated_answer=IS_NO_ANSWER
                 )
 
-            # 4. Map-Reduce selection
+    
             logger.debug("Applying map-reduce to select best segments")
             selected_segments: List[str] = []
             batch_size = 3
@@ -145,7 +138,6 @@ class RAGPipeline:
                     generated_answer=IS_NO_ANSWER
                 )
 
-            # 5. Generate final answer
             logger.debug("Generating final answer")
             info_for_gen = "\n".join(selected_segments)
             generated = await self.generate_chain.apredict(request=user_message, info=info_for_gen)

@@ -1,6 +1,6 @@
 import faiss
 import numpy as np
-from typing import List, Tuple
+from typing import List
 
 class EmbeddingSearcher:
     def __init__(self, embeddings: List[List[float]], texts: List[str]):
@@ -17,7 +17,7 @@ class EmbeddingSearcher:
         self.index = self._build_index(self.embeddings)
 
     def _build_index(self, embeddings: np.ndarray):
-        index = faiss.IndexFlatIP(embeddings.shape[1])  # Inner product для cosine similarity при нормализации
+        index = faiss.IndexFlatIP(embeddings.shape[1])
         index.add(embeddings)
         return index
 
@@ -36,7 +36,7 @@ class EmbeddingSearcher:
         """
         query = np.array([query_embedding], dtype="float32")  # (1, 312)
 
-        similarities, indices = self.index.search(query, top_k)  # max similarity = 1.0
+        similarities, indices = self.index.search(query, top_k)
 
         results = []
         for idx, sim in zip(indices[0], similarities[0]):

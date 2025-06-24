@@ -1,5 +1,4 @@
 import logging
-import os
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
 from config.contracts import RAGRequest, RAGResponse
@@ -23,17 +22,11 @@ async def process_rag_request(request: RAGRequest):
     """Обработать RAG запрос"""
     logger.info(f"Processing RAG request for chat_id: {request.chat_id}")
     try:
-        # if not config:
-        #     logger.error("OpenAI API key not configured")
-        #     raise HTTPException(
-        #         status_code=500, 
-        #         detail="OpenAI API key not configured"
-        #     )
-        
+
         logger.info(f"Processing user message: {request.user_message[:100]}...")
         
         rag_pipeline = RAGPipeline()
-        # Обрабатываем RAG запрос
+        
         result = await rag_pipeline.process_rag_request(
             request.chat_id,
             request.user_message,
@@ -50,7 +43,7 @@ async def process_rag_request(request: RAGRequest):
             request.text_chunks,
         )
         
-        # Проверяем на ошибки
+
         if result.status == "error":
             logger.error(f"RAG processing failed : {result.message}")
             return result

@@ -13,7 +13,7 @@ services:
     volumes:
       - ./logs:/app/logs
     restart: unless-stopped
-    command: uvicorn main:app --host 0.0.0.0 --port 5050 --log-level info  # Явный запуск Uvicorn
+    command: uvicorn main:app --host 0.0.0.0 --port 5050 --log-level info 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5050/api/v1/health"]
       interval: 30s

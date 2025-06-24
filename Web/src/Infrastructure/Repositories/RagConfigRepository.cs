@@ -25,8 +25,11 @@ public sealed class RagConfigRepository : IRagConfigRepository
         }
         else
         {
-            existing.Prompt     = cfg.Prompt;
-            existing.DocumentId = cfg.DocumentId;
+            existing.Prompt      = cfg.Prompt;
+            existing.DocumentId  = cfg.DocumentId;
+            existing.TopK        = cfg.TopK;
+            existing.Temperature = cfg.Temperature;
+            existing.Threshold   = cfg.Threshold;
             _ctx.RagConfigs.Update(existing);
         }
         await _ctx.SaveChangesAsync(ct);

@@ -32,7 +32,10 @@ CREATE TABLE IF NOT EXISTS rag_settings
 (
     rag_id      uuid PRIMARY KEY,
     prompt      text    NOT NULL,
-    document_id uuid
+    document_id uuid,
+    top_k       int     NOT NULL DEFAULT 3,
+    temperature numeric NOT NULL DEFAULT 0.7,
+    threshold   numeric NOT NULL DEFAULT 0.0
 );
 
 -- ---------- NEW : public share links ------------

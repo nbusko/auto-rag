@@ -1,25 +1,26 @@
 ﻿namespace AutoRag.Application.DTOs;
 
-/// <summary>
-/// Информация о загруженном документе
-/// </summary>
 public sealed record DocumentInfoDto(Guid Id, string FileName, long Size)
 {
-     // когда не задаётся явно – проставляется текущее время
-     public DateTime UploadedAt { get; init; } = DateTime.UtcNow;
+    public DateTime UploadedAt { get; init; } = DateTime.UtcNow;
 }
-/// <summary>
-/// Конфигурация RAG-системы (mutable, требуется двусторонний data-binding в Blazor)
-/// </summary>
+
 public class RagConfigDto
 {
     public Guid? SelectedDocumentId { get; set; }
     public string SystemPrompt { get; set; } = string.Empty;
     public int TopK { get; set; } = 3;
+    public decimal Temperature { get; set; } = 0.7m;
+    public decimal Threshold { get; set; } = 0.0m;
 
     public RagConfigDto() { }
 
-    public RagConfigDto(Guid? selectedDocumentId, string systemPrompt, int topK)
-        => (SelectedDocumentId, SystemPrompt, TopK) = (selectedDocumentId, systemPrompt, topK);
+    public RagConfigDto(Guid? selectedDocumentId,
+                        string systemPrompt,
+                        int topK,
+                        decimal temperature = 0.7m,
+                        decimal threshold   = 0.0m)
+        => (SelectedDocumentId, SystemPrompt, TopK, Temperature, Threshold)
+         = (selectedDocumentId, systemPrompt, topK, temperature, threshold);
 }
 

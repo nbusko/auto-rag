@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- тип Vector для работы с pgvector -->
+        <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.2.2" />
+  </ItemGroup>
+
 </Project>

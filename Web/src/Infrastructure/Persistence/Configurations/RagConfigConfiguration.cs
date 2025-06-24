@@ -13,5 +13,8 @@ internal sealed class RagConfigConfiguration : IEntityTypeConfiguration<RagConfi
         b.Property(x => x.Id).HasColumnName("rag_id");
         b.Property(x => x.Prompt).HasColumnName("prompt");
         b.Property(x => x.DocumentId).HasColumnName("document_id");
+        b.Property(x => x.TopK).HasColumnName("top_k");
+        b.Property(x => x.Temperature).HasColumnName("temperature");
+        b.Property(x => x.Threshold).HasColumnName("threshold");
     }
 }

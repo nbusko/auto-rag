@@ -37,9 +37,14 @@
                          @bind-Value="_config.TopK" />
 
         <MudNumericField T="decimal" Label="Temperature"
-                         Min="0" Max="2"
-                         Step="@(0.1m)"
-                         @bind-Value="_temperature" />
+                        Min="0" Max="2"
+                        Step="@(0.1m)"
+                        @bind-Value="_config.Temperature" />
+
+        <MudNumericField T="decimal" Label="Threshold"
+                        Min="0" Max="1"
+                        Step="@(0.05m)"
+                        @bind-Value="_config.Threshold" />
 
         <MudButton OnClick="Save" Color="Color.Primary" Variant="Variant.Filled">
             Save

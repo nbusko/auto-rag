@@ -23,12 +23,12 @@ async def process_rag_request(request: RAGRequest):
     """Обработать RAG запрос"""
     logger.info(f"Processing RAG request for chat_id: {request.chat_id}")
     try:
-        if not os.getenv("OPENAI_API_KEY"):
-            logger.error("OpenAI API key not configured")
-            raise HTTPException(
-                status_code=500, 
-                detail="OpenAI API key not configured"
-            )
+        # if not config:
+        #     logger.error("OpenAI API key not configured")
+        #     raise HTTPException(
+        #         status_code=500, 
+        #         detail="OpenAI API key not configured"
+        #     )
         
         logger.info(f"Processing user message: {request.user_message[:100]}...")
         
@@ -52,10 +52,10 @@ async def process_rag_request(request: RAGRequest):
         
         # Проверяем на ошибки
         if result.status == "error":
-            logger.error(f"RAG processing error: {result.message}")
-            raise HTTPException(status_code=400, detail=result.message)
+            logger.error(f"RAG processing failed : {result.message}")
+            return result
         
-        logger.info(f"RAG request processed for chat_id: {request.chat_id}")
+        logger.info(f"RAG request processed for chat_id: {request.chat_id} with result: {result.generated_answer}")
         
         return result
         

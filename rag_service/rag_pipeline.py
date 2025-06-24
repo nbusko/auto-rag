@@ -39,7 +39,7 @@ class RAGPipeline:
             openai_api_key=self.config.OPENAI_API_KEY,
             model_name=llm_model,
             temperature=temperature,
-            base_url=self.config.OPENAI_BASE_URL,
+            base_url=str(self.config.OPENAI_BASE_URL),
         )
         # Prepare prompt templates
         self.filter_prompt = PromptTemplate(
@@ -92,11 +92,12 @@ class RAGPipeline:
             if filter_json.get("result") != "yes":
                 logger.warning("Request did not pass filter: %s", user_message)
                 return RAGResponse(
-                    status=Status.error,
-                    message=IS_BAD_ANSWER,
+                    status=Status.ERROR,
+                    message="IS_BAD_ANSWER",
                     chat_id=chat_id,
                     message_id=message_id,
                     document_id=document_id,
+                    generated_answer=IS_BAD_ANSWER
                 )
 
             # 2. Transform user query
@@ -111,11 +112,12 @@ class RAGPipeline:
             if not raw_segments:
                 logger.info("No relevant segments found for query: %s", improved_query)
                 return RAGResponse(
-                    status=Status.error,
-                    message=IS_NO_ANSWER,
+                    status=Status.ERROR,
+                    message="IS_NO_ANSWER",
                     chat_id=chat_id,
                     message_id=message_id,
                     document_id=document_id,
+                    generated_answer=IS_NO_ANSWER
                 )
 
             # 4. Map-Reduce selection
@@ -135,11 +137,12 @@ class RAGPipeline:
             if not selected_segments:
                 logger.info("Map-reduce did not yield any segments")
                 return RAGResponse(
-                    status=Status.error,
-                    message=IS_NO_ANSWER,
+                    status=Status.ERROR,
+                    message="IS_NO_ANSWER",
                     chat_id=chat_id,
                     message_id=message_id,
                     document_id=document_id,
+                    generated_answer=IS_NO_ANSWER
                 )
 
             # 5. Generate final answer
@@ -148,7 +151,7 @@ class RAGPipeline:
             generated = await self.generate_chain.apredict(request=user_message, info=info_for_gen)
 
             return RAGResponse(
-                status=Status.success,
+                status=Status.SUCCESS,
                 message="OK",
                 chat_id=chat_id,
                 message_id=message_id,
@@ -159,7 +162,7 @@ class RAGPipeline:
         except Exception as e:
             logger.exception("Error processing RAG request: %s", e)
             return RAGResponse(
-                status=Status.error,
+                status=Status.ERROR,
                 message=str(e),
                 chat_id=chat_id,
                 message_id=message_id,

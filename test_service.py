@@ -7,12 +7,13 @@ import requests
 import json
 import time
 import sys
+import uuid
 
 def test_health_check():
     """Тест health check эндпоинта"""
     print("🔍 Тестирование health check...")
     try:
-        response = requests.get("http://localhost:5060/api/v1/health", timeout=10)
+        response = requests.get("http://localhost:5050/api/v1/health", timeout=10)
         if response.status_code == 200:
             print("✅ Health check успешен")
             print(f"   Ответ: {response.json()}")
@@ -28,7 +29,7 @@ def test_root_endpoint():
     """Тест корневого эндпоинта"""
     print("\n🔍 Тестирование корневого эндпоинта...")
     try:
-        response = requests.get("http://localhost:5060/api/v1/", timeout=10)
+        response = requests.get("http://localhost:5050/api/v1/", timeout=10)
         if response.status_code == 200:
             print("✅ Корневой эндпоинт работает")
             print(f"   Ответ: {response.json()}")
@@ -46,19 +47,19 @@ def test_rag_process():
     
     # Тестовые данные
     test_data = {
-        "chat_id": "test_chat_123",
+        "chat_id": str(uuid.uuid4()),
         "user_message": "Что такое искусственный интеллект?",
-        "document_id": "test_doc_456",
-        "embeddings": [[0.1] * 312],  # Тестовый эмбеддинг размерности 312
-        "text_chunks": ["hihello" * 312],
+        "document_id": str(uuid.uuid4()),
+        "embeddings": [[0.5] * 312],  # Тестовый эмбеддинг размерности 312
+        "text_chunks": ["Искусственный интеллект это нейросеть на стероидах" * 312],
         "top_k": 5,
         "temperature": 0.7,
-        "threshold": 0.5
+        "threshold": 0.0
     }
     
     try:
         response = requests.post(
-            "http://localhost:5060/api/v1/rag/process",
+            "http://localhost:5050/api/v1/rag/process",
             json=test_data,
             timeout=30
         )
@@ -83,7 +84,7 @@ def test_swagger_ui():
     """Тест доступности Swagger UI"""
     print("\n🔍 Тестирование Swagger UI...")
     try:
-        response = requests.get("http://localhost:5060/docs", timeout=10)
+        response = requests.get("http://localhost:5050/docs", timeout=10)
         if response.status_code == 200:
             print("✅ Swagger UI доступен")
             return True

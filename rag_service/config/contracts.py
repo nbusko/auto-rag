@@ -2,8 +2,8 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from enum import Enum
 from uuid import UUID
-from rag_settings import AppConfig
-from constants import MAP_REDUCE_PROMPT, GENERATE_FINAL_ANSWER_PROMPT, RETRIEVE_PROMPT
+from config.rag_settings import AppConfig
+from config.constants import MAP_REDUCE_PROMPT, GENERATE_FINAL_ANSWER_PROMPT, RETRIEVE_PROMPT
 
 config = AppConfig()
 

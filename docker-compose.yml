@@ -1,3 +1,53 @@
+version: '3.8'
+
+services:
+  rag_service:
+    build: ./rag_service
+    container_name: rag_service
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL}
+      - EMBEDDER_MODEL=${EMBEDDER_MODEL}
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 5050 --log-level info 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  document_processor:
+    build: ./document_processor
+    container_name: document_processor
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL}
+      - EMBEDDER_MODEL=${EMBEDDER_MODEL}
+    ports:
+      - "5030:5030"
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 5030 --log-level info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5030/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 services:
   db:
     image: pgvector/pgvector:pg16

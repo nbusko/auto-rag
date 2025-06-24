@@ -38,6 +38,11 @@ build/
 # Windows
 Thumbs.db
 
+#db
+postgres_data
+example_request.md
+*ruff*
+
 .vs/
 bin/
 obj/

@@ -8,6 +8,8 @@
 @inject IJSRuntime         Js
 @inject NavigationManager  Nav
 @using MudBlazor
+@using Markdig
+@implements IDisposable
 
 <PageTitle>Chat</PageTitle>
 
@@ -21,9 +23,8 @@ else
 {
     <MudPaper Class="pa-4">
 
-        <!-- история -->
-        <div id="messagesContainer"
-             class="chat-messages mb-2">
+        <!-- ----------------------------- HISTORY --------------------------- -->
+        <div id="messagesContainer" class="chat-messages mb-2">
             @foreach (var m in _messages)
             {
                 <MudChat ChatPosition="@(m.Role=="user"
@@ -31,21 +32,30 @@ else
                          :ChatBubblePosition.Start)">
                     <MudChatBubble Class="@(m.Role=="user"
                                              ? "bubble-user"
-                                             : "bubble-assistant")"
-                                   Elevation="2">
+                                             : "bubble-assistant")">
                         <div class="bubble-content">
                             <MudIcon Icon="@(m.Role=="user"
                                              ? Icons.Material.Filled.Person
                                              : Icons.Material.Filled.SmartToy)"
                                      Size="Size.Small" />
-                            <span>@m.Content</span>
+                            <MudText Typo="Typo.body2">
+                                @((MarkupString)ToHtml(m.Content))
+                            </MudText>
                         </div>
                     </MudChatBubble>
                 </MudChat>
             }
+
+            @if (_waiting)
+            {
+                <div class="d-flex align-center mt-2 gap-2">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                    <MudText Typo="Typo.subtitle2">@($"{_waitSeconds:0}")</MudText>
+                </div>
+            }
         </div>
 
-        <!-- ввод -->
+        <!-- ----------------------------- INPUT ----------------------------- -->
         <MudTextField T="string"
                       @ref="_inputRef"
                       Class="chat-input"
@@ -60,24 +70,30 @@ else
 }
 
 @code {
+    /* ---------------- state ---------------- */
     private readonly List<ChatMessageDto> _messages = [];
     private string _input = string.Empty;
     private MudTextField<string> _inputRef = default!;
     private bool _notAuthenticated;
 
-    /* загрузка истории при открытии страницы */
+    /* waiting indicator */
+    private bool _waiting;
+    private DateTime _waitStart;
+    private double  _waitSeconds;
+    private System.Timers.Timer? _timer;
+
+    /* ---------------- init ---------------- */
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            /* уже отсортирован в ChatService (по Id) */
             var history = await ChatSvc.GetHistoryAsync();
             _messages.AddRange(history);
             await ScrollToBottom();
         }
         catch (InvalidOperationException)
         {
-            /* пользователь не залогинился – показываем предупреждение
-               и редиректим спустя короткую задержку, чтобы не падал prerender */
             _notAuthenticated = true;
             await Task.Delay(50);
             Nav.NavigateTo("/auth", true, true);
@@ -88,6 +104,7 @@ else
         }
     }
 
+    /* ---------------- handlers ---------------- */
     private async Task HandleKey(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await Send();
@@ -95,16 +112,15 @@ else
 
     private async Task Send()
     {
-        if (_notAuthenticated) return;
-        if (string.IsNullOrWhiteSpace(_input)) return;
+        if (_notAuthenticated || string.IsNullOrWhiteSpace(_input)) return;
 
         var text = _input.Trim();
-        _input   = string.Empty;            // сброс модели
-        await InvokeAsync(StateHasChanged); // немедленный ререндер
-
-        _inputRef.Clear();                  // гарантированно очистить визуально
+        _input = string.Empty;                     // очистка model
+        await InvokeAsync(StateHasChanged);
+        _inputRef.Clear();                         // очистка UI
 
         _messages.Add(new("user", text, DateTime.UtcNow));
+        StartWaitingIndicator();
 
         try
         {
@@ -116,15 +132,47 @@ else
             Snackbar.Add($"Error: {ex.Message}", Severity.Error);
         }
 
-        await InvokeAsync(StateHasChanged);
+        StopWaitingIndicator();
         await ScrollToBottom();
     }
 
+    /* ---------------- waiting indicator ---------------- */
+    private void StartWaitingIndicator()
+    {
+        _waitStart   = DateTime.UtcNow;
+        _waitSeconds = 0;
+        _waiting     = true;
+
+        _timer = new System.Timers.Timer(1000);
+        _timer.Elapsed += (_, _) =>
+        {
+            _waitSeconds = (DateTime.UtcNow - _waitStart).TotalSeconds;
+            InvokeAsync(StateHasChanged);
+        };
+        _timer.AutoReset = true;
+        _timer.Start();
+    }
+
+    private void StopWaitingIndicator()
+    {
+        _timer?.Stop();
+        _timer?.Dispose();
+        _timer = null;
+        _waiting = false;
+        _waitSeconds = 0;
+        InvokeAsync(StateHasChanged);
+    }
+
+    /* ---------------- helpers ---------------- */
     private async Task ScrollToBottom()
     {
         try { await Js.InvokeVoidAsync("autoragScrollToBottom", "messagesContainer"); }
         catch { }
     }
+
+    private static string ToHtml(string md) => Markdown.ToHtml(md ?? string.Empty);
+
+    public void Dispose() => _timer?.Dispose();
 }
 
 <style>
@@ -135,7 +183,6 @@ else
         border:1px solid var(--mud-palette-grey-lighten2);
         border-radius:4px;
     }
-
     .bubble-user{
         background:#e3f2fd;
         border:1px solid #bbdefb;
@@ -148,9 +195,9 @@ else
     }
     .bubble-content{
         display:flex;
-        align-items:center;
+        align-items:flex-start;
         gap:.4rem;
+        white-space:normal;
     }
-
-    .chat-input{ width:100%; }
+    .chat-input{width:100%}
 </style>

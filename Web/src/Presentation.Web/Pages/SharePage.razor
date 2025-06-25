@@ -15,8 +15,9 @@
     <!-- переключатель публичной ссылки -->
     <MudSwitch T="bool"
                Checked="_enabled"
-               CheckedChanged="OnSwitchChanged"
-               Color="Color.Primary">
+               CheckedChanged="ToggleLink"
+               Color="Color.Primary"
+               Class="mb-2">
         Enable&nbsp;public&nbsp;link
     </MudSwitch>
 
@@ -24,10 +25,12 @@
                   ReadOnly="true"
                   Label="Share link"
                   Value="@_shareUrl"
+                  Disabled="!_enabled"
                   Class="w-100" />
 
     <MudButton Variant="Variant.Outlined"
                Color="Color.Primary"
+               Disabled="!_enabled"
                OnClick="CopyLink">
         Copy&nbsp;to&nbsp;clipboard
     </MudButton>
@@ -61,7 +64,8 @@
             <MudForm @ref="_addForm">
                 <MudTextField @bind-Value="_add.FullName" Label="Full name" Required="true" />
                 <MudTextField @bind-Value="_add.Email"    Label="Email"      Required="true" />
-                <MudTextField @bind-Value="_add.Password" Label="Password"   InputType="InputType.Password" Required="true" />
+                <MudTextField @bind-Value="_add.Password" Label="Password"
+                              InputType="InputType.Password" Required="true" />
                 <MudButton Color="Color.Primary" OnClick="AddUser">Add</MudButton>
             </MudForm>
         </MudExpansionPanel>
@@ -77,6 +81,7 @@
     private CreateSubUserDto _add   = new();
     private MudForm _addForm = default!;
 
+    /* ---------------- init ---------------- */
     protected override async Task OnInitializedAsync()
     {
         _link     = await ShareSvc.GetOrCreateLinkAsync();
@@ -85,22 +90,33 @@
         _users    = (await ShareSvc.ListUsersAsync()).ToList();
     }
 
-    /* смена статуса ссылки */
-    private async Task OnSwitchChanged(bool value)
+    /* ---------------- switch ---------------- */
+    private async Task ToggleLink(bool val)
     {
-        _enabled = value;
-        await ShareSvc.EnableLinkAsync(value);
-        Snackbar.Add(value ? "Public link enabled" : "Public link disabled", Severity.Info);
+        var ok = await ShareSvc.EnableLinkAsync(val);
+        if (!ok)
+        {
+            Snackbar.Add("Failed to update link", Severity.Error);
+            return;
+        }
+
+        _enabled = val;
+        Snackbar.Add(val ? "Public link enabled" : "Public link disabled", Severity.Info);
     }
 
-    /* копирование */
+    /* ---------------- clipboard ---------------- */
     private async Task CopyLink()
     {
+        if (!_enabled)
+        {
+            Snackbar.Add("Link is disabled", Severity.Warning);
+            return;
+        }
         await Js.InvokeVoidAsync("navigator.clipboard.writeText", _shareUrl);
         Snackbar.Add("Copied", Severity.Success);
     }
 
-    /* добавление участника */
+    /* ---------------- members ---------------- */
     private async Task AddUser()
     {
         await _addForm.Validate();
@@ -110,7 +126,7 @@
         {
             Snackbar.Add("User added", Severity.Success);
             _users = (await ShareSvc.ListUsersAsync()).ToList();
-            _add = new();   // очистить форму
+            _add = new();
         }
         else
         {
@@ -118,7 +134,6 @@
         }
     }
 
-    /* удаление */
     private async Task Remove(string id)
     {
         if (await ShareSvc.RemoveUserAsync(id))

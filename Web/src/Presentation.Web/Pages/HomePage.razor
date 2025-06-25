@@ -13,41 +13,57 @@
     <MudText Typo="Typo.subtitle1" Class="px-4 fade-in delay-1" Style="max-width:700px">
         Start by uploading your knowledge base, tweak retrieval parameters
         and chat with the assistant – all from the navigation on the left.
-        Your journey to production–ready RAG begins now!
+        Your journey to production-ready RAG begins now!
     </MudText>
 </div>
 
+<!-- ----------- нижний блок (как landing) ----------- -->
+<section class="features">
+    <div class="feature-card">
+        <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" Color="Color.Primary" />
+        <h4>No-code ingestion</h4>
+        <p>Drag &amp; drop PDFs, DOCX, TXT or connect your existing data sources.</p>
+    </div>
+    <div class="feature-card">
+        <MudIcon Icon="@Icons.Material.Filled.Tune" Size="Size.Large" Color="Color.Secondary" />
+        <h4>Fine control</h4>
+        <p>Adjust chunk size, Top-K, similarity metric and system prompt in one click.</p>
+    </div>
+    <div class="feature-card">
+        <MudIcon Icon="@Icons.Material.Filled.FlashOn" Size="Size.Large" Color="Color.Info" />
+        <h4>Blazing fast</h4>
+        <p>Vector search powered by Postgres + pgvector delivers results under&nbsp;100&nbsp;ms.</p>
+    </div>
+</section>
+
 <style>
-    .internal-hero {
-        height: 60vh;
-        background: linear-gradient(150deg,#136a8a 0%,#267871 100%);
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
+    .internal-hero{
+        height:60vh;
+        background:linear-gradient(150deg,#136a8a 0%,#267871 100%);
+        color:#fff;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        text-align:center;
     }
-
-    .fade-in {
-        animation: fadein .7s both
+    .features{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:center;
+        gap:2rem;
+        padding:4rem 1rem;
+        background:#fff;
     }
-
-    .delay-1 {
-        animation-delay: .3s
+    .feature-card{
+        max-width:280px;
+        text-align:center;
+        padding:1rem;
     }
-    @@keyframes fadein {
-        from
-
-    {
-        opacity: 0;
-        transform: translateY(30px)
-    }
-
-    to {
-        opacity: 1;
-        transform: none
-    }
-
+    .fade-in{ animation:fadein .7s both }
+    .delay-1{ animation-delay:.3s }
+    @@keyframes fadein{
+        from{ opacity:0; transform:translateY(30px) }
+        to  { opacity:1; transform:none }
     }
 </style>

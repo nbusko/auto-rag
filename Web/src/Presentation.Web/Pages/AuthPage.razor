@@ -13,34 +13,48 @@
 <link href="css/landing.css" rel="stylesheet" />
 
 <div class="auth-container d-flex justify-center align-center">
-    <MudPaper Class="pa-6" Style="max-width:450px; width:100%">
+    <MudPaper Class="pa-6" Style="max-width:450px;width:100%">
         <MudTabs @bind-ActivePanelIndex="_tabIndex" Rounded="true">
 
+            <!-- ---------------- REGISTER ---------------- -->
             <MudTabPanel Text="Register">
                 <MudForm @ref="_regForm">
-                    <MudTextField @bind-Value="_vm.FullName" Label="Full name" Required="true" />
-                    <MudTextField @bind-Value="_vm.Email"    Label="Email"      Required="true" />
+                    <MudTextField @bind-Value="_vm.FullName" Label="Full name" Required="true" Class="mb-3" />
+                    <MudTextField @bind-Value="_vm.Email"    Label="Email"      Required="true" Class="mb-3" />
                     <MudTextField @bind-Value="_vm.Password" Label="Password"
-                                   InputType="InputType.Password" Required="true" />
-                    <div class="d-flex justify-center mt-4">
-                        <MudButton Color="Color.Primary" Disabled="_vm.IsBusy" OnClick="Register">
-                            Register
-                        </MudButton>
-                    </div>
+                                   InputType="InputType.Password" Required="true" Class="mb-4" />
+
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="12">
+                            <MudButton Color="Color.Primary"
+                                       Disabled="_vm.IsBusy"
+                                       OnClick="Register"
+                                       Class="mud-width-full">
+                                Register
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
                 </MudForm>
                 @Message()
             </MudTabPanel>
 
+            <!-- ---------------- LOGIN ---------------- -->
             <MudTabPanel Text="Login">
                 <MudForm @ref="_loginForm">
-                    <MudTextField @bind-Value="_vm.Email"    Label="Email"      Required="true" />
+                    <MudTextField @bind-Value="_vm.Email"    Label="Email"      Required="true" Class="mb-3" />
                     <MudTextField @bind-Value="_vm.Password" Label="Password"
-                                   InputType="InputType.Password" Required="true" />
-                    <div class="d-flex justify-center mt-4">
-                        <MudButton Color="Color.Primary" Disabled="_vm.IsBusy" OnClick="Login">
-                            Login
-                        </MudButton>
-                    </div>
+                                   InputType="InputType.Password" Required="true" Class="mb-4" />
+
+                    <MudGrid Class="mb-3">
+                        <MudItem xs="12">
+                            <MudButton Color="Color.Primary"
+                                       Disabled="_vm.IsBusy"
+                                       OnClick="Login"
+                                       Class="mud-width-full">
+                                Login
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
                 </MudForm>
                 @Message()
             </MudTabPanel>
@@ -51,7 +65,7 @@
 
 @code {
     [SupplyParameterFromQuery(Name = "token")]
-    public Guid? Token { get; set; }               // токен расшаренной ссылки
+    public Guid? Token { get; set; }
 
     private readonly AuthPageVm _vm = new();
     private int _tabIndex;
@@ -102,5 +116,5 @@
 }
 
 <style>
-    .auth-container { height: 100vh; }
+    .auth-container{height:100vh}
 </style>

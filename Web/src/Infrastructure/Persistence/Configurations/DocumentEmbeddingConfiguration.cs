@@ -14,7 +14,7 @@ internal sealed class DocumentEmbeddingConfiguration : IEntityTypeConfiguration<
         b.Property(x => x.ChunkIndex).HasColumnName("chunk_index");
         b.Property(x => x.Content).HasColumnName("content");
         b.Property(x => x.Embedding)
-        .HasColumnName("embedding")
-        .HasColumnType("vector(1536)");
+         .HasColumnName("embedding")
+         .HasColumnType("vector(312)");
     }
 }

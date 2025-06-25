@@ -15,7 +15,7 @@ public sealed class MinioFileStorageService : IFileStorageService
     private readonly MinioSettings _settings;
     private readonly ICurrentUser _current;
 
-    /*  индекс документов хранится отдельно для каждого rag-id   */
+    /* индекс документов хранится отдельно для каждого rag-id */
     private static readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, DocumentInfoDto>> _indices = new();
     private static readonly ConcurrentDictionary<string, byte> _bucketInit = new();
 
@@ -31,8 +31,8 @@ public sealed class MinioFileStorageService : IFileStorageService
     /* ------------------------------------------------ upload --------------------------------------------- */
     public async Task<DocumentInfoDto> UploadAsync(string fileName, Stream content, CancellationToken ct = default)
     {
+        var ragId = RequireRagId();                       // must be logged-in
         await EnsureBucketAsync(ct);
-        var ragId = GetRagId();
 
         var id        = Guid.NewGuid();
         var objectKey = $"{ragId}/{id}/{fileName}";
@@ -60,8 +60,13 @@ public sealed class MinioFileStorageService : IFileStorageService
     /* ------------------------------------------------ list ------------------------------------------------ */
     public async Task<IReadOnlyList<DocumentInfoDto>> ListAsync(CancellationToken ct = default)
     {
+        /* если пользователь не аутентифицирован – возвращаем пустой список,
+           чтобы не ронять prerender главной страницы */
+        if (_current.RagId is null)
+            return Array.Empty<DocumentInfoDto>();
+
+        var ragId = _current.RagId.Value;
         await EnsureBucketAsync(ct);
-        var ragId = GetRagId();
 
         if (GetIndex(ragId).IsEmpty)
             await LoadIndexAsync(ragId, ct);
@@ -72,8 +77,31 @@ public sealed class MinioFileStorageService : IFileStorageService
                               .AsReadOnly();
     }
 
+    /* ------------------------------------------------ download ------------------------------------------- */
+    public async Task<Stream> DownloadAsync(Guid documentId, CancellationToken ct = default)
+    {
+        var ragId = RequireRagId();
+        await EnsureBucketAsync(ct);
+
+        if (!GetIndex(ragId).TryGetValue(documentId, out var info))
+            throw new KeyNotFoundException("Document not found");
+
+        var ms = new MemoryStream();
+
+        await _minio.GetObjectAsync(
+            new GetObjectArgs()
+                .WithBucket(_settings.Bucket)
+                .WithObject($"{ragId}/{documentId}/{info.FileName}")
+                .WithCallbackStream(s => s.CopyTo(ms)),
+            ct);
+
+        ms.Position = 0;
+        return ms;
+    }
+
     /* ------------------------------------------- helpers -------------------------------------------------- */
-    private Guid GetRagId() => _current.RagId ?? throw new InvalidOperationException("Unauthenticated");
+    private Guid RequireRagId()
+        => _current.RagId ?? throw new InvalidOperationException("Unauthenticated");
 
     private ConcurrentDictionary<Guid, DocumentInfoDto> GetIndex(Guid ragId)
         => _indices.GetOrAdd(ragId, _ => new());

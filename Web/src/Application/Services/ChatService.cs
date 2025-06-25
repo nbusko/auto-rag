@@ -2,6 +2,7 @@ using AutoRag.Application.DTOs;
 using AutoRag.Application.Interfaces;
 using AutoRag.Domain.Entities;
 using AutoRag.Domain.Interfaces.Repositories;
+using Pgvector;                      // ← для Vector
 
 namespace AutoRag.Application.Services;
 
@@ -39,11 +40,15 @@ public sealed class ChatService : IChatService
         var docId = cfg.DocumentId       ?? throw new InvalidOperationException("Document not selected");
         var embs = await _emb.GetByDocumentIdAsync(docId, ct);
 
+        /* ---------- КОРРЕКТНО конвертируем Vector -> List<float> ---------- */
+        static IReadOnlyList<float> ToFloatList(Vector v)
+            => v.ToArray().Select(f => (float)f).ToList().AsReadOnly();
+
         var request = new RagRequestDto(
             RagId.ToString(),
             req.Message,
             docId,
-            embs.Select(e => (IReadOnlyList<float>)e.Embedding).ToList(),
+            embs.Select(e => (IReadOnlyList<float>)ToFloatList(e.Embedding)).ToList(),
             embs.Select(e => e.Content).ToList(),
             cfg.TopK,
             (float)cfg.Temperature,

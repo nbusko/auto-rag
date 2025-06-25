@@ -3,63 +3,89 @@
 @using AutoRag.Application.Interfaces
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.JSInterop
-@inject IChatService ChatSvc
-@inject ISnackbar    Snackbar
-@inject IJSRuntime   Js
+@inject IChatService       ChatSvc
+@inject ISnackbar          Snackbar
+@inject IJSRuntime         Js
+@inject NavigationManager  Nav
 @using MudBlazor
 
 <PageTitle>Chat</PageTitle>
 
-<MudPaper Class="pa-4">
+@if (_notAuthenticated)
+{
+    <MudAlert Severity="Severity.Warning">
+        Please log-in to access chat.
+    </MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-4">
 
-    <!-- история -->
-    <div id="messagesContainer"
-         class="chat-messages mb-2">
-        @foreach (var m in _messages)
-        {
-            <MudChat ChatPosition="@(m.Role=="user"
-                     ?ChatBubblePosition.End
-                     :ChatBubblePosition.Start)">
-                <MudChatBubble Class="@(m.Role=="user"
-                                         ? "bubble-user"
-                                         : "bubble-assistant")"
-                               Elevation="2">
-                    <div class="bubble-content">
-                        <MudIcon Icon="@(m.Role=="user"
-                                         ? Icons.Material.Filled.Person
-                                         : Icons.Material.Filled.SmartToy)"
-                                 Size="Size.Small" />
-                        <span>@m.Content</span>
-                    </div>
-                </MudChatBubble>
-            </MudChat>
-        }
-    </div>
+        <!-- история -->
+        <div id="messagesContainer"
+             class="chat-messages mb-2">
+            @foreach (var m in _messages)
+            {
+                <MudChat ChatPosition="@(m.Role=="user"
+                         ?ChatBubblePosition.End
+                         :ChatBubblePosition.Start)">
+                    <MudChatBubble Class="@(m.Role=="user"
+                                             ? "bubble-user"
+                                             : "bubble-assistant")"
+                                   Elevation="2">
+                        <div class="bubble-content">
+                            <MudIcon Icon="@(m.Role=="user"
+                                             ? Icons.Material.Filled.Person
+                                             : Icons.Material.Filled.SmartToy)"
+                                     Size="Size.Small" />
+                            <span>@m.Content</span>
+                        </div>
+                    </MudChatBubble>
+                </MudChat>
+            }
+        </div>
 
-    <!-- ввод -->
-    <MudTextField T="string"
-                  @ref="_inputRef"
-                  Class="chat-input"
-                  Placeholder="Type your message…"
-                  Adornment="Adornment.End"
-                  AdornmentIcon="@Icons.Material.Filled.Send"
-                  OnAdornmentClick="Send"
-                  OnKeyDown="HandleKey"
-                  Immediate="true"
-                  @bind-Value="_input" />
-</MudPaper>
+        <!-- ввод -->
+        <MudTextField T="string"
+                      @ref="_inputRef"
+                      Class="chat-input"
+                      Placeholder="Type your message…"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Send"
+                      OnAdornmentClick="Send"
+                      OnKeyDown="HandleKey"
+                      Immediate="true"
+                      @bind-Value="_input" />
+    </MudPaper>
+}
 
 @code {
     private readonly List<ChatMessageDto> _messages = [];
     private string _input = string.Empty;
     private MudTextField<string> _inputRef = default!;
+    private bool _notAuthenticated;
 
     /* загрузка истории при открытии страницы */
     protected override async Task OnInitializedAsync()
     {
-        var history = await ChatSvc.GetHistoryAsync();
-        _messages.AddRange(history);
-        await ScrollToBottom();
+        try
+        {
+            var history = await ChatSvc.GetHistoryAsync();
+            _messages.AddRange(history);
+            await ScrollToBottom();
+        }
+        catch (InvalidOperationException)
+        {
+            /* пользователь не залогинился – показываем предупреждение
+               и редиректим спустя короткую задержку, чтобы не падал prerender */
+            _notAuthenticated = true;
+            await Task.Delay(50);
+            Nav.NavigateTo("/auth", true, true);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task HandleKey(KeyboardEventArgs e)
@@ -69,6 +95,7 @@
 
     private async Task Send()
     {
+        if (_notAuthenticated) return;
         if (string.IsNullOrWhiteSpace(_input)) return;
 
         var text = _input.Trim();

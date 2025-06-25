@@ -64,7 +64,14 @@ builder.Services.AddHttpClient<IAssistantService, AssistantClient>(c =>
 
 builder.Services.AddHttpClient<IRagService, RagServiceClient>(c =>
 {
-    var baseUrl = cfg["ExternalApis:RagService"] ?? "http://localhost:5050/";
+    var baseUrl = cfg["ExternalApis:RagService"] ?? "http://rag_service:5050/";
+    c.BaseAddress = new Uri(baseUrl);
+});
+
+builder.Services.AddHttpClient<IDocumentProcessorService, DocumentProcessorClient>(c =>
+{
+    /*  внутри docker-сети имя контейнера ‑ document_processor  */
+    var baseUrl = cfg["ExternalApis:DocumentProcessor"] ?? "http://document_processor:5030/";
     c.BaseAddress = new Uri(baseUrl);
 });
 

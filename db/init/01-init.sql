@@ -52,6 +52,6 @@ CREATE TABLE IF NOT EXISTS document_embeddings
     document_id uuid NOT NULL,
     chunk_index int  NOT NULL,
     content     text NOT NULL,
-    embedding   vector(1536),
+    embedding   vector(312),
     CONSTRAINT pk_document_embeddings PRIMARY KEY (document_id, chunk_index)
 );

@@ -30,12 +30,22 @@ CREATE TABLE IF NOT EXISTS chat_history
 
 CREATE TABLE IF NOT EXISTS rag_settings
 (
-    rag_id      uuid PRIMARY KEY,
-    prompt      text    NOT NULL,
-    document_id uuid,
-    top_k       int     NOT NULL DEFAULT 3,
-    temperature numeric NOT NULL DEFAULT 0.7,
-    threshold   numeric NOT NULL DEFAULT 0.0
+    rag_id              uuid PRIMARY KEY,
+    prompt              text    NOT NULL,     -- prompt_generation
+    document_id         uuid,
+    top_k               int     NOT NULL DEFAULT 3,
+    temperature         numeric NOT NULL DEFAULT 0.7,
+    threshold           numeric NOT NULL DEFAULT 0.0,
+
+    llm_model           text    NOT NULL DEFAULT 'gpt-4o-mini',
+
+    prompt_retrieve     text,
+    prompt_augmentation text,
+    prompt_split        text,
+    prompt_table        text,
+
+    split_method        text    NOT NULL DEFAULT 'batch',     -- 'batch' | 'llm'
+    batch_size          int     NOT NULL DEFAULT 1000
 );
 
 -- ---------- NEW : public share links ------------

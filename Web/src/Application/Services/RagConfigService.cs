@@ -35,18 +35,17 @@ public sealed class RagConfigService : IRagConfigService
         var entity = _mapper.Map<RagConfig>(dto);
         await _repo.UpsertAsync(RagId, entity, ct);
 
-        /* 2. если выбран документ – создаём / обновляем его эмбеддинги */
+        /* 2. если выбран документ – создаём / обновляем эмбеддинги */
         if (dto.SelectedDocumentId is Guid docId && docId != Guid.Empty)
         {
-            /* скачать файл из хранилища */
             await using var stream = await _storage.DownloadAsync(docId, ct);
 
-            /* вызвать document-processor */
-            var res = await _processor.ProcessDocumentAsync(docId, stream, ct);
+            /* передаём ВСЕ параметры из RagConfigDto */
+            var res = await _processor.ProcessDocumentAsync(docId, stream, dto, ct);
+
             if (res.Status != "success" || res.Embeddings is null || res.Texts is null)
                 throw new InvalidOperationException($"Document processor error: {res.Message}");
 
-            /* сохранить эмбеддинги */
             await _embRepo.ReplaceAsync(docId, res.Texts, res.Embeddings, ct);
         }
 

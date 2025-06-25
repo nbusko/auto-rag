@@ -3,18 +3,20 @@
 @using AutoRag.Application.DTOs
 @using AutoRag.Application.Interfaces
 @inject IFileStorageService FileSvc
-@inject IRagConfigService ConfigSvc
-@inject ISnackbar Snackbar
+@inject IRagConfigService  ConfigSvc
+@inject ISnackbar          Snackbar
 
 <PageTitle>RAG settings</PageTitle>
 
-<MudPaper Class="pa-4 mx-auto" Style="max-width:600px">
-    <MudText Typo="Typo.h5">RAG configuration</MudText>
+<MudPaper Class="pa-4 mx-auto" Style="max-width:800px">
+
+    <MudText Typo="Typo.h5">Knowledge-base &amp; RAG configuration</MudText>
 
     <MudForm @ref="_form">
 
-        <MudSelect T="Guid?" Label="Document"
-                   @bind-Value="_config.SelectedDocumentId"
+        <!-- ---------- DOCUMENT ---------- -->
+        <MudSelect T="Guid?" Label="Knowledge base (document)"
+                   @bind-Value="_cfg.SelectedDocumentId"
                    Required="true">
             @if (_docs.Count == 0)
             {
@@ -24,27 +26,69 @@
             {
                 @foreach (var d in _docs)
                 {
-                    <MudSelectItem T="Guid?" Value="@(d.Id)">@d.FileName</MudSelectItem>
+                    <MudSelectItem T="Guid?" Value="@d.Id">@d.FileName</MudSelectItem>
                 }
             }
         </MudSelect>
 
-        <MudTextField T="string" Label="System prompt"
-                      Lines="3" @bind-Value="_config.SystemPrompt" />
+        <!-- ---------- RETRIEVAL ---------- -->
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.subtitle1">Search parameters</MudText>
 
-        <MudNumericField T="int" Label="Top-K"
-                         Min="1" Max="10"
-                         @bind-Value="_config.TopK" />
+        <MudNumericField T="int" Label="Top-K (top_k)"
+                         Min="1" Max="20"
+                         @bind-Value="_cfg.TopK" />
 
-        <MudNumericField T="decimal" Label="Temperature"
-                        Min="0" Max="2"
-                        Step="@(0.1m)"
-                        @bind-Value="_config.Temperature" />
+        <MudNumericField T="decimal" Label="Answer originality (temperature)"
+                         Min="0" Max="2"
+                         Step="@(0.1m)"
+                         @bind-Value="_cfg.Temperature" />
 
-        <MudNumericField T="decimal" Label="Threshold"
-                        Min="0" Max="1"
-                        Step="@(0.05m)"
-                        @bind-Value="_config.Threshold" />
+        <MudNumericField T="decimal" Label="Similarity threshold (threshold)"
+                         Min="0" Max="1"
+                         Step="@(0.05m)"
+                         @bind-Value="_cfg.Threshold" />
+
+        <!-- ---------- LLM & PROMPTS ---------- -->
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.subtitle1">LLM &amp; prompts</MudText>
+
+        <MudTextField T="string" Label="LLM model for answers (llm_model)"
+                      @bind-Value="_cfg.LlmModel" />
+
+        <MudTextField T="string" Lines="4"
+                      Label="System prompt for final answer (prompt_generation)"
+                      @bind-Value="_cfg.SystemPrompt" />
+
+        <MudTextField T="string" Lines="3"
+                      Label="Prompt for query improvement (prompt_retrieve)"
+                      @bind-Value="_cfg.RetrievePrompt" />
+
+        <MudTextField T="string" Lines="6"
+                      Label="Prompt for passage selection (prompt_augmentation)"
+                      @bind-Value="_cfg.AugmentationPrompt" />
+
+        <!-- ---------- DOC-PROCESSOR ---------- -->
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.subtitle1">Default document-processing</MudText>
+
+        <MudSelect T="string" Label="Splitting method (split_method)"
+                   @bind-Value="_cfg.SplitMethod">
+            <MudSelectItem T="string" Value="@("batch")">Size-based</MudSelectItem>
+            <MudSelectItem T="string" Value="@("llm")">LLM smart split</MudSelectItem>
+        </MudSelect>
+
+        <MudNumericField T="int" Label="Chunk size, symbols (batch_size)"
+                         Min="5" Max="2000"
+                         @bind-Value="_cfg.BatchSize" />
+
+        <MudTextField T="string" Lines="3"
+                      Label="Prompt for splitting text (prompt_split)"
+                      @bind-Value="_cfg.SplitPrompt" />
+
+        <MudTextField T="string" Lines="3"
+                      Label="Prompt for table conversion (prompt_table)"
+                      @bind-Value="_cfg.TablePrompt" />
 
         <MudButton OnClick="Save" Color="Color.Primary" Variant="Variant.Filled">
             Save
@@ -53,15 +97,55 @@
 </MudPaper>
 
 @code {
+    /* ---------- technical tail (always required for map-reduce) ---------- */
+    private const string TECHNICAL_AUG_TAIL = @"
+Запрос пользователя: {request}
+Доступные отрывки текста: {info}
+Верни список только с релевантными новостями
+Ответ верни в формате списка:
+[
+""первый отрывок"",
+""второй отрывок"",
+...
+]
+Не выводи дополнительной информации, начни отвечать с [";
+
+    /* ---------- default prompts (обязательно содержат маркеры) ---------- */
+    private const string DEFAULT_SYSTEM_PROMPT = @"Ты агент поддержки и формируешь ответ только на основе предоставленной информации.
+
+Запрос пользователя: {request}
+Информация для ответа: {info}";
+
+    private const string DEFAULT_RETRIEVE_PROMPT = @"Ты агент, который используется на начальной стадии работы RAG-системы.
+Твоя задача трансформировать запрос пользователя так, чтобы поиск в векторной базе был точнее.";
+
+    private const string DEFAULT_AUGMENTATION_PROMPT_BASE = @"На основе запроса пользователя выбери наиболее соответствующие отрывки текста.
+Если отрывок не содержит информации, которую ищет человек, не добавляй его в итоговый список";
+
+    private const string DEFAULT_SPLIT_PROMPT = @"Ты агент для разделения документов на логические части. Раздели текст на блоки до 300 символов.";
+    private const string DEFAULT_TABLE_PROMPT = @"Ты агент для обработки табличных данных. Преобразуй строки таблицы в удобочитаемый текст.";
+
+    /* ---------- state ---------- */
     private List<DocumentInfoDto> _docs = [];
-    private RagConfigDto _config = new(null,"You are RAG system",3);
-    private decimal _temperature = 0.0m;
+    private RagConfigDto _cfg = new(null, DEFAULT_SYSTEM_PROMPT, 3)
+    {
+        RetrievePrompt     = DEFAULT_RETRIEVE_PROMPT,
+        AugmentationPrompt = DEFAULT_AUGMENTATION_PROMPT_BASE + TECHNICAL_AUG_TAIL,
+        SplitPrompt        = DEFAULT_SPLIT_PROMPT,
+        TablePrompt        = DEFAULT_TABLE_PROMPT
+    };
+
     private MudForm _form = default!;
 
     protected override async Task OnInitializedAsync()
     {
         _docs = (await FileSvc.ListAsync()).ToList();
-        _config = await ConfigSvc.GetAsync() ?? _config;
+
+        var stored = await ConfigSvc.GetAsync();
+        if (stored is not null)
+            _cfg = stored;
+
+        EnsureDefaults();
     }
 
     private async Task Save()
@@ -69,7 +153,48 @@
         await _form.Validate();
         if (!_form.IsValid) return;
 
-        await ConfigSvc.SaveAsync(_config);
+        EnsureDefaults();
+        AttachTechnicalTail();
+        EnsureSystemPlaceholders();
+
+        await ConfigSvc.SaveAsync(_cfg);
         Snackbar.Add("Configuration saved", Severity.Success);
+    }
+
+    /* ---------- helpers ---------- */
+
+    private void EnsureDefaults()
+    {
+        if (string.IsNullOrWhiteSpace(_cfg.SystemPrompt))
+            _cfg.SystemPrompt = DEFAULT_SYSTEM_PROMPT;
+        if (string.IsNullOrWhiteSpace(_cfg.RetrievePrompt))
+            _cfg.RetrievePrompt = DEFAULT_RETRIEVE_PROMPT;
+        if (string.IsNullOrWhiteSpace(_cfg.AugmentationPrompt))
+            _cfg.AugmentationPrompt = DEFAULT_AUGMENTATION_PROMPT_BASE;
+        if (string.IsNullOrWhiteSpace(_cfg.SplitPrompt))
+            _cfg.SplitPrompt = DEFAULT_SPLIT_PROMPT;
+        if (string.IsNullOrWhiteSpace(_cfg.TablePrompt))
+            _cfg.TablePrompt = DEFAULT_TABLE_PROMPT;
+        if (string.IsNullOrWhiteSpace(_cfg.LlmModel))
+            _cfg.LlmModel = "gpt-4o-mini";
+    }
+
+    /* добавляет тех-хвост map-reduce, если отсутствует */
+    private void AttachTechnicalTail()
+    {
+        if (!_cfg.AugmentationPrompt.Contains("Ответ верни в формате списка"))
+            _cfg.AugmentationPrompt =
+                _cfg.AugmentationPrompt.TrimEnd() + "\n" + TECHNICAL_AUG_TAIL;
+    }
+
+    /* гарантирует, что system-prompt содержит оба маркера */
+    private void EnsureSystemPlaceholders()
+    {
+        var p = _cfg.SystemPrompt;
+        if (!p.Contains("{request}", StringComparison.Ordinal))
+            p += "\n\nЗапрос пользователя: {request}";
+        if (!p.Contains("{info}", StringComparison.Ordinal))
+            p += "\nИнформация для ответа: {info}";
+        _cfg.SystemPrompt = p;
     }
 }

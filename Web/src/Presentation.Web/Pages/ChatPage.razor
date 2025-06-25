@@ -50,7 +50,7 @@ else
             {
                 <div class="d-flex align-center mt-2 gap-2">
                     <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                    <MudText Typo="Typo.subtitle2">@($"{_waitSeconds:0}")</MudText>
+                    <MudText Typo="Typo.subtitle2">@($"{_waitSeconds:0}s")</MudText>
                 </div>
             }
         </div>
@@ -63,23 +63,27 @@ else
                       Adornment="Adornment.End"
                       AdornmentIcon="@Icons.Material.Filled.Send"
                       OnAdornmentClick="Send"
-                      OnKeyDown="HandleKey"
+                      OnKeyUp="HandleKey"
                       Immediate="true"
                       @bind-Value="_input" />
     </MudPaper>
 }
 
 @code {
+    /* ---------------- state ---------------- */
     private readonly List<ChatMessageDto> _messages = [];
     private string _input = string.Empty;
     private MudTextField<string> _inputRef = default!;
+
     private bool _notAuthenticated;
 
+    /* waiting indicator */
     private bool _waiting;
     private DateTime _waitStart;
     private double _waitSeconds;
     private System.Timers.Timer? _timer;
 
+    /* ---------------- lifecycle ---------------- */
     protected override async Task OnInitializedAsync()
     {
         try
@@ -100,19 +104,23 @@ else
         }
     }
 
+    /* ---------------- events ---------------- */
     private async Task HandleKey(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") await Send();
+        if (e.Key == "Enter")
+            await Send();
     }
 
     private async Task Send()
     {
-        if (_notAuthenticated || string.IsNullOrWhiteSpace(_input)) return;
+        var text = _input?.Trim();
+        if (_notAuthenticated || string.IsNullOrWhiteSpace(text))
+            return;
 
-        var text = _input.Trim();
+        /* clear input BEFORE awaiting anything */
         _input = string.Empty;
-        await InvokeAsync(StateHasChanged);
         _inputRef.Clear();
+        await InvokeAsync(StateHasChanged);
 
         _messages.Add(new("user", text, DateTime.UtcNow));
         StartWaitingIndicator();
@@ -131,12 +139,12 @@ else
         await ScrollToBottom();
     }
 
-    /* ---------------- waiting indicator ---------------- */
+    /* ---------------- waiting indicator helpers ---------------- */
     private void StartWaitingIndicator()
     {
-        _waitStart   = DateTime.UtcNow;
+        _waitStart = DateTime.UtcNow;
         _waitSeconds = 0;
-        _waiting     = true;
+        _waiting = true;
 
         _timer = new System.Timers.Timer(1000);
         _timer.Elapsed += (_, _) =>
@@ -158,11 +166,11 @@ else
         InvokeAsync(StateHasChanged);
     }
 
-    /* ---------------- helpers ---------------- */
+    /* ---------------- misc helpers ---------------- */
     private async Task ScrollToBottom()
     {
         try { await Js.InvokeVoidAsync("autoragScrollToBottom", "messagesContainer"); }
-        catch { }
+        catch { /* ignore */ }
     }
 
     private static string ToHtml(string md) => Markdown.ToHtml(md ?? string.Empty);

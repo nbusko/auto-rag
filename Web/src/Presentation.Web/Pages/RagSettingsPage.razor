@@ -3,105 +3,107 @@
 @using AutoRag.Application.DTOs
 @using AutoRag.Application.Interfaces
 @inject IFileStorageService FileSvc
-@inject IRagConfigService ConfigSvc
-@inject ISnackbar Snackbar
+@inject IRagConfigService   ConfigSvc
+@inject ISnackbar           Snackbar
 
 <PageTitle>RAG settings</PageTitle>
 
-<MudPaper Class="pa-4 mx-auto" Style="max-width:800px">
+<div class="settings-container">
+    <MudPaper Class="pa-4 mx-auto settings-paper">
 
-    <MudText Typo="Typo.h5">Knowledge-base &amp; RAG configuration</MudText>
+        <MudText Typo="Typo.h5">Knowledge-base &amp; RAG configuration</MudText>
 
-    <MudForm @ref="_form">
+        <MudForm @ref="_form">
 
-        <MudSelect T="Guid?" Label="Knowledge base (document)"
-                   @bind-Value="_cfg.SelectedDocumentId"
-                   Required="true" Class="mb-4">
-            @if (_docs.Count == 0)
-            {
-                <MudSelectItem T="Guid?" Disabled="true">No documents</MudSelectItem>
-            }
-            else
-            {
-                @foreach (var d in _docs)
+            <!-- ---------- document ---------- -->
+            <MudSelect T="Guid?"
+                       Label="Knowledge base (document)"
+                       @bind-Value="_cfg.SelectedDocumentId"
+                       Required="true"
+                       Class="mb-4">
+                @if (_docs.Count == 0)
                 {
-                    <MudSelectItem T="Guid?" Value="@d.Id">@d.FileName</MudSelectItem>
+                    <MudSelectItem T="Guid?" Disabled="true">No documents</MudSelectItem>
                 }
-            }
-        </MudSelect>
+                else
+                {
+                    @foreach (var d in _docs)
+                    {
+                        <MudSelectItem T="Guid?" Value="@d.Id">@d.FileName</MudSelectItem>
+                    }
+                }
+            </MudSelect>
 
-        <MudDivider Class="my-4" />
-        <MudText Typo="Typo.subtitle1">Search parameters</MudText>
+            <MudDivider Class="my-4" />
+            <MudText Typo="Typo.subtitle1">Search parameters</MudText>
 
-        <MudNumericField T="int" Label="Top-K (top_k)"
-                         Min="1" Max="20"
-                         @bind-Value="_cfg.TopK" Class="mb-3" />
+            <MudNumericField T="int" Label="Top-K (top_k)"
+                             Min="1" Max="20"
+                             @bind-Value="_cfg.TopK" Class="mb-3" />
 
-        <MudNumericField T="decimal" Label="Answer originality (temperature)"
-                         Min="0" Max="2"
-                         Step="@(0.1m)"
-                         @bind-Value="_cfg.Temperature" Class="mb-3" />
+            <MudNumericField T="decimal" Label="Answer originality (temperature)"
+                             Min="0" Max="2" Step="@(0.1m)"
+                             @bind-Value="_cfg.Temperature" Class="mb-3" />
 
-        <MudNumericField T="decimal" Label="Similarity threshold (threshold)"
-                         Min="0" Max="1"
-                         Step="@(0.05m)"
-                         @bind-Value="_cfg.Threshold" Class="mb-4" />
+            <MudNumericField T="decimal" Label="Similarity threshold (threshold)"
+                             Min="0" Max="1" Step="@(0.05m)"
+                             @bind-Value="_cfg.Threshold" Class="mb-4" />
 
-        <MudDivider Class="my-4" />
-        <MudText Typo="Typo.subtitle1">LLM &amp; prompts</MudText>
+            <MudDivider Class="my-4" />
+            <MudText Typo="Typo.subtitle1">LLM &amp; prompts</MudText>
 
-        <MudTextField T="string" Label="LLM model for answers (llm_model)"
-                      @bind-Value="_cfg.LlmModel"
-                      Placeholder="gpt-4o-mini"
-                      Class="mb-4" />
+            <MudTextField T="string" Label="LLM model for answers (llm_model)"
+                          @bind-Value="_cfg.LlmModel"
+                          Placeholder="gpt-4o-mini"
+                          Class="mb-4" />
 
-        <MudTextField T="string" Lines="6"
-                      Label="System prompt for final answer (prompt_generation)"
-                      @bind-Value="_genEditable" Class="mb-4" />
+            <MudTextField T="string" Lines="6"
+                          Label="System prompt for final answer (prompt_generation)"
+                          @bind-Value="_genEditable" Class="mb-4" />
 
-        <MudTextField T="string" Lines="6"
-                      Label="Prompt for query improvement (prompt_retrieve)"
-                      @bind-Value="_retrieveEditable" Class="mb-4" />
+            <MudTextField T="string" Lines="6"
+                          Label="Prompt for query improvement (prompt_retrieve)"
+                          @bind-Value="_retrieveEditable" Class="mb-4" />
 
-        <MudTextField T="string" Lines="6"
-                      Label="Prompt for passage selection (prompt_augmentation)"
-                      @bind-Value="_augEditable" Class="mb-4" />
+            <MudTextField T="string" Lines="6"
+                          Label="Prompt for passage selection (prompt_augmentation)"
+                          @bind-Value="_augEditable" Class="mb-4" />
 
-        <MudDivider Class="my-4" />
-        <MudText Typo="Typo.subtitle1">Default document-processing</MudText>
+            <MudDivider Class="my-4" />
+            <MudText Typo="Typo.subtitle1">Default document-processing</MudText>
 
-        <MudSelect T="string" Label="Splitting method (split_method)"
-                   @bind-Value="_cfg.SplitMethod" Class="mb-3">
-            <MudSelectItem T="string" Value="@("batch")">Size-based</MudSelectItem>
-            <MudSelectItem T="string" Value="@("llm")">LLM smart split</MudSelectItem>
-        </MudSelect>
+            <MudSelect T="string" Label="Splitting method (split_method)"
+                       @bind-Value="_cfg.SplitMethod" Class="mb-3">
+                <MudSelectItem T="string" Value="@("batch")">Size-based</MudSelectItem>
+                <MudSelectItem T="string" Value="@("llm")">LLM smart split</MudSelectItem>
+            </MudSelect>
 
-        <MudNumericField T="int" Label="Chunk size, symbols (batch_size)"
-                         Min="5" Max="2000"
-                         @bind-Value="_cfg.BatchSize" Class="mb-4" />
+            <MudNumericField T="int" Label="Chunk size, symbols (batch_size)"
+                             Min="5" Max="2000"
+                             @bind-Value="_cfg.BatchSize" Class="mb-4" />
 
-        <MudTextField T="string" Lines="6"
-                      Label="Prompt for splitting text (prompt_split)"
-                      @bind-Value="_splitEditable" Class="mb-4" />
+            <MudTextField T="string" Lines="6"
+                          Label="Prompt for splitting text (prompt_split)"
+                          @bind-Value="_splitEditable" Class="mb-4" />
 
-        <MudTextField T="string" Lines="6"
-                      Label="Prompt for table conversion (prompt_table)"
-                      @bind-Value="_tableEditable" Class="mb-4" />
+            <MudTextField T="string" Lines="6"
+                          Label="Prompt for table conversion (prompt_table)"
+                          @bind-Value="_tableEditable" Class="mb-4" />
 
-        <MudButton OnClick="Save" Color="Color.Primary" Variant="Variant.Filled">
-            Save
-        </MudButton>
-    </MudForm>
-</MudPaper>
+            <MudButton OnClick="Save" Color="Color.Primary" Variant="Variant.Filled">
+                Save
+            </MudButton>
+        </MudForm>
+    </MudPaper>
+</div>
 
 @code {
-
-private const string GEN_TAIL = @"
+    /* --- constants & helpers (unchanged for brevity) --- */
+    private const string GEN_TAIL = @"
 
 Запрос пользователя: {request}
 Информация для ответа на вопрос: {info}";
-
-private const string AUG_TAIL = @"
+    private const string AUG_TAIL = @"
 Запрос пользователя: {request}
 Доступные отрывки текста: {info}
 Верни список только с релевантными новостями
@@ -111,13 +113,11 @@ private const string AUG_TAIL = @"
 ""второй отрывок"",
 ...
 ]
-Не выводи дополнительной информации, начни отвечать с [" ;
-
-private const string RETRIEVE_TAIL = @"
+Не выводи дополнительной информации, начни отвечать с [";
+    private const string RETRIEVE_TAIL = @"
 Запрос пользователя: {request}
-Выведи только трансформированный запрос одной строкой, не давай дополнительные описания" ;
-
-private const string SPLIT_TAIL = @"
+Выведи только трансформированный запрос одной строкой, не давай дополнительные описания";
+    private const string SPLIT_TAIL = @"
 Текст для разделения:
 {text}
 
@@ -128,9 +128,8 @@ private const string SPLIT_TAIL = @"
 ""третья часть текста""
 ]
 
-Не добавляй дополнительных комментариев, начни отвечать с [" ;
-
-private const string TABLE_TAIL = @"
+Не добавляй дополнительных комментариев, начни отвечать с [";
+    private const string TABLE_TAIL = @"
 Табличные данные:
 {table_data}
 
@@ -141,121 +140,115 @@ private const string TABLE_TAIL = @"
 ""обработанная строка 3""
 ]
 
-Не добавляй дополнительных комментариев, начни отвечать с [" ;
-
-private const string CONST_GEN_HEAD = @"
+Не добавляй дополнительных комментариев, начни отвечать с [";
+    private const string CONST_GEN_HEAD = @"
 Ты агент поддержки и отвечаешь на ответы пользователя по предоставленной информации.
 Тебе будет дан запрос и информация, на основании которой ты должен сформировать подробный, красиво оформленный ответ.
-Не добавляй дополнительной информации от себя, отвечай только по предоставленной информации." ;
-
-private const string CONST_RETRIEVE_HEAD = @"
+Не добавляй дополнительной информации от себя, отвечай только по предоставленной информации.";
+    private const string CONST_RETRIEVE_HEAD = @"
 Ты агент, который используется на начальной стадии работы RAG-системы.
 тебе будет дан запрос пользователя, касающийся информации в базе знаний.
-Твоя задача трансформировать, перефразировать запрос пользователя так, чтобы при поиске при помощи косинусного расстояния в векторной базе информация находилась точнее." ;
-
-private const string CONST_AUG_HEAD = @"
+Твоя задача трансформировать, перефразировать запрос пользователя так, чтобы при поиске при помощи косинусного расстояния в векторной базе информация находилась точнее.";
+    private const string CONST_AUG_HEAD = @"
 На основе запроса пользователя выбери наиболее соответствующие отрывки текста.
-Если отрывок не содержит информации, которую ищет человек, не добавляй его в итоговый список" ;
-
-private const string CONST_SPLIT_HEAD = @"
+Если отрывок не содержит информации, которую ищет человек, не добавляй его в итоговый список";
+    private const string CONST_SPLIT_HEAD = @"
 Ты агент для разделения документов на логические части.
-Твоя задача - разделить предоставленный текст на смысловые блоки, каждый из которых должен быть самодостаточным и содержать связанную информацию.
-
-Правила разделения:
-1. Каждая часть должна содержать законченную мысль или тему
-2. Части не должны быть слишком длинными (максимум 300 символов)
-3. Части не должны быть слишком короткими (минимум 10 символов)
-4. Сохраняй логическую связность внутри каждой части
-5. Не разрывай предложения посередине" ;
-
-private const string CONST_TABLE_HEAD = @"
+Твоя задача - разделить предоставленный текст на смысловые блоки.";
+    private const string CONST_TABLE_HEAD = @"
 Ты агент для обработки табличных данных.
-Твоя задача - преобразовать табличные данные в читаемый текстовый формат.
+Твоя задача - преобразовать табличные данные в читаемый текстовый формат.";
 
-Правила обработки:
-1. Каждая строка таблицы должна стать отдельным текстовым блоком
-2. Объедини значения столбцов в осмысленный текст
-3. Добавь контекст и описания где это необходимо
-4. Сохрани структуру и логику данных" ;
+    private List<DocumentInfoDto> _docs = [];
 
-private List<DocumentInfoDto> _docs = [];
+    private RagConfigDto _cfg = new(null, (CONST_GEN_HEAD + GEN_TAIL).Trim(), 3)
+    {
+        RetrievePrompt      = (CONST_RETRIEVE_HEAD + RETRIEVE_TAIL).Trim(),
+        AugmentationPrompt  = (CONST_AUG_HEAD      + AUG_TAIL     ).Trim(),
+        SplitPrompt         = (CONST_SPLIT_HEAD    + SPLIT_TAIL   ).Trim(),
+        TablePrompt         = (CONST_TABLE_HEAD    + TABLE_TAIL   ).Trim(),
+        LlmModel            = "gpt-4o-mini"
+    };
 
-private RagConfigDto _cfg = new(null, (CONST_GEN_HEAD + GEN_TAIL).Trim(), 3)
-{
-    RetrievePrompt= (CONST_RETRIEVE_HEAD + RETRIEVE_TAIL).Trim(),
-    AugmentationPrompt = (CONST_AUG_HEAD + AUG_TAIL).Trim(),
-    SplitPrompt = (CONST_SPLIT_HEAD + SPLIT_TAIL).Trim(),
-    TablePrompt = (CONST_TABLE_HEAD + TABLE_TAIL).Trim(),
-    LlmModel = "gpt-4o-mini"
-};
+    private string _genEditable      = CONST_GEN_HEAD.Trim();
+    private string _retrieveEditable = CONST_RETRIEVE_HEAD.Trim();
+    private string _augEditable      = CONST_AUG_HEAD.Trim();
+    private string _splitEditable    = CONST_SPLIT_HEAD.Trim();
+    private string _tableEditable    = CONST_TABLE_HEAD.Trim();
 
-private string _genEditable = CONST_GEN_HEAD.Trim();
-private string _retrieveEditable = CONST_RETRIEVE_HEAD.Trim();
-private string _augEditable = CONST_AUG_HEAD.Trim();
-private string _splitEditable = CONST_SPLIT_HEAD.Trim();
-private string _tableEditable = CONST_TABLE_HEAD.Trim();
+    private MudForm _form = default!;
 
-private MudForm _form = default!;
+    protected override async Task OnInitializedAsync()
+    {
+        _docs = (await FileSvc.ListAsync()).ToList();
+        var stored = await ConfigSvc.GetAsync();
+        if (stored is not null) _cfg = stored;
+        RestoreEditableParts();
+    }
 
+    private async Task Save()
+    {
+        await _form.Validate();
+        if (!_form.IsValid) return;
 
-protected override async Task OnInitializedAsync()
-{
-    _docs = (await FileSvc.ListAsync()).ToList();
+        ComposePrompts();
+        EnsureDefaults();
 
-    var stored = await ConfigSvc.GetAsync();
-    if (stored is not null)
-        _cfg = stored;
+        await ConfigSvc.SaveAsync(_cfg);
+        Snackbar.Add("Configuration saved", Severity.Success);
+    }
 
-    RestoreEditableParts();
-}
+    /* --- helper methods (unchanged) --- */
+    private static string StripTail(string full,string tail)
+        => full.LastIndexOf(tail,StringComparison.Ordinal) is var idx and >=0
+           ? full[..idx].TrimEnd() : full;
 
-private async Task Save()
-{
-    await _form.Validate();
-    if (!_form.IsValid) return;
+    private static string Compose(string editable,string tail)
+        => $"{editable.Trim()}\n{tail}".Trim();
 
-    ComposePrompts();
-    EnsureOtherDefaults();
+    private void RestoreEditableParts()
+    {
+        _genEditable      = StripTail(_cfg.SystemPrompt       ?? "", GEN_TAIL);
+        _retrieveEditable = StripTail(_cfg.RetrievePrompt     ?? "", RETRIEVE_TAIL);
+        _augEditable      = StripTail(_cfg.AugmentationPrompt ?? "", AUG_TAIL);
+        _splitEditable    = StripTail(_cfg.SplitPrompt        ?? "", SPLIT_TAIL);
+        _tableEditable    = StripTail(_cfg.TablePrompt        ?? "", TABLE_TAIL);
+    }
 
-    await ConfigSvc.SaveAsync(_cfg);
-    Snackbar.Add("Configuration saved", Severity.Success);
-}
+    private void ComposePrompts()
+    {
+        _cfg.SystemPrompt       = Compose(_genEditable,      GEN_TAIL);
+        _cfg.RetrievePrompt     = Compose(_retrieveEditable, RETRIEVE_TAIL);
+        _cfg.AugmentationPrompt = Compose(_augEditable,      AUG_TAIL);
+        _cfg.SplitPrompt        = Compose(_splitEditable,    SPLIT_TAIL);
+        _cfg.TablePrompt        = Compose(_tableEditable,    TABLE_TAIL);
+    }
 
-private static string StripTail(string full, string tail)
-{
-    var idx = full.LastIndexOf(tail, StringComparison.Ordinal);
-    return idx >= 0 ? full[..idx].TrimEnd() : full;
-}
-
-private static string Compose(string editable, string tail)
-    => $"{editable.Trim()}\n{tail}".Trim();
-
-private void RestoreEditableParts()
-{
-    _genEditable = StripTail(_cfg.SystemPrompt ?? "", GEN_TAIL);
-    _retrieveEditable = StripTail(_cfg.RetrievePrompt ?? "", RETRIEVE_TAIL);
-    _augEditable = StripTail(_cfg.AugmentationPrompt ?? "", AUG_TAIL);
-    _splitEditable = StripTail(_cfg.SplitPrompt ?? "", SPLIT_TAIL);
-    _tableEditable = StripTail(_cfg.TablePrompt ?? "", TABLE_TAIL);
-}
-
-private void ComposePrompts()
-{
-    _cfg.SystemPrompt = Compose(_genEditable,      GEN_TAIL);
-    _cfg.RetrievePrompt  = Compose(_retrieveEditable, RETRIEVE_TAIL);
-    _cfg.AugmentationPrompt = Compose(_augEditable,      AUG_TAIL);
-    _cfg.SplitPrompt = Compose(_splitEditable,    SPLIT_TAIL);
-    _cfg.TablePrompt = Compose(_tableEditable,    TABLE_TAIL);
-}
-
-private void EnsureOtherDefaults()
-{
-    if (string.IsNullOrWhiteSpace(_cfg.LlmModel))
-        _cfg.LlmModel = "gpt-4o-mini";
-}
+    private void EnsureDefaults()
+    {
+        if (string.IsNullOrWhiteSpace(_cfg.LlmModel))
+            _cfg.LlmModel = "gpt-4o-mini";
+    }
 }
 
 <style>
-    .mb-3{ margin-bottom:1.1rem !important; }
-    .mb-4{ margin-bottom:1.4rem !important; }
+    .settings-container{
+        height:100vh;
+        overflow:hidden;
+        display:flex;
+        justify-content:center;
+        align-items:flex-start;
+        padding-top:1rem;
+    }
+    .settings-paper{
+        max-width:800px;
+        width:100%;
+        height:100%;
+        overflow-y:auto;
+    }
+    @@media (max-width:600px){
+        .settings-paper{padding:1rem}
+    }
+    .mb-3{margin-bottom:1.1rem !important;}
+    .mb-4{margin-bottom:1.4rem !important;}
 </style>

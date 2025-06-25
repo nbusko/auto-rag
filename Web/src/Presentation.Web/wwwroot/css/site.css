@@ -1,13 +1,12 @@
 ﻿body {
 }
 
-/* add vertical offset so that page content is rendered below the AppBar */
 .content-container {
-    padding-top: 64px; /* height of dense MudAppBar */
+    padding-top: 64px;
 }
 
 @media(max-width:600px) {
     .content-container {
-        padding-top: 56px; /* mobile dense app-bar */
+        padding-top: 56px;
     }
 }

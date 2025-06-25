@@ -23,11 +23,9 @@ public sealed class DocumentEmbeddingRepository : IDocumentEmbeddingRepository
                                    IEnumerable<IReadOnlyList<float>> embeddings,
                                    CancellationToken ct = default)
     {
-        /* удалить старые записи */
         var existing = _ctx.DocumentEmbeddings.Where(e => e.DocumentId == documentId);
         _ctx.DocumentEmbeddings.RemoveRange(existing);
 
-        /* добавить новые */
         int idx = 0;
         foreach (var pair in texts.Zip(embeddings))
         {
@@ -35,8 +33,8 @@ public sealed class DocumentEmbeddingRepository : IDocumentEmbeddingRepository
             {
                 DocumentId = documentId,
                 ChunkIndex = idx++,
-                Content    = pair.First,
-                Embedding  = new Vector(pair.Second.ToArray())
+                Content = pair.First,
+                Embedding = new Vector(pair.Second.ToArray())
             };
             await _ctx.DocumentEmbeddings.AddAsync(ent, ct);
         }

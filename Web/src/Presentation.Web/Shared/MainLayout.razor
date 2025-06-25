@@ -6,7 +6,6 @@
 <MudThemeProvider Theme="_theme" @bind-IsDarkMode="_isDark" />
 
 <MudLayout>
-    <!-- верхняя панель -->
     <MudAppBar Color="Color.Primary" Dense="true" Fixed="false">
         <MudIconButton Icon="@Icons.Material.Filled.Menu"
                        Color="Color.Inherit"
@@ -15,7 +14,6 @@
         <MudText Typo="Typo.h6" Class="ml-2">AutoRag</MudText>
     </MudAppBar>
 
-    <!-- боковая панель -->
     <MudDrawer Elevation="1" Open="_drawerOpen">
         <MudNavMenu Dense="true">
 
@@ -23,13 +21,12 @@
                 Log&nbsp;off
             </MudNavLink>
 
-            @* меню владельца *@
             @if (Cur.IsOwner)
             {
-                <MudNavLink Href="/home"        Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-                <MudNavLink Href="documents"    Icon="@Icons.Material.Filled.Description">Documents</MudNavLink>
+                <MudNavLink Href="/home" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+                <MudNavLink Href="documents" Icon="@Icons.Material.Filled.Description">Documents</MudNavLink>
                 <MudNavLink Href="rag-settings" Icon="@Icons.Material.Filled.Settings">RAG&nbsp;Settings</MudNavLink>
-                <MudNavLink Href="share"        Icon="@Icons.Material.Filled.Group">Share</MudNavLink>
+                <MudNavLink Href="share" Icon="@Icons.Material.Filled.Group">Share</MudNavLink>
             }
 
             <MudNavLink Href="chat" Icon="@Icons.Material.Filled.Chat">Chat</MudNavLink>
@@ -41,7 +38,6 @@
         </MudNavMenu>
     </MudDrawer>
 
-    <!-- контент -->
     <MudMainContent Class="pa-4">
         @Body
     </MudMainContent>
@@ -57,14 +53,14 @@
     {
         PaletteLight = new PaletteLight
         {
-            Primary          = Colors.Blue.Default,
-            Secondary        = Colors.Green.Accent4,
+            Primary = Colors.Blue.Default,
+            Secondary = Colors.Green.Accent4,
             AppbarBackground = Colors.Blue.Darken1
         },
         PaletteDark = new PaletteDark
         {
-            Primary          = Colors.Blue.Lighten3,
-            Secondary        = Colors.Lime.Accent3,
+            Primary = Colors.Blue.Lighten3,
+            Secondary = Colors.Lime.Accent3,
             AppbarBackground = Colors.BlueGray.Darken4
         }
     };

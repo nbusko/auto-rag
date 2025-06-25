@@ -3,7 +3,6 @@
 @using AutoRag.Presentation.Web.ViewModels
 @inject AutoRag.Application.Interfaces.IYearDataService YearDataSvc
 
-@* обязательные пространства имён *@
 @using MudBlazor
 @implements IDisposable         
 
@@ -55,7 +54,7 @@
     private async Task Load()
     {
         _vm.IsBusy = true;
-        _vm.Error  = null;
+        _vm.Error = null;
         try
         {
             _vm.Report = await YearDataSvc.GetYearReportAsync(_vm.Year);

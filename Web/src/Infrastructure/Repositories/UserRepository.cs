@@ -49,8 +49,6 @@ public sealed class UserRepository : IUserRepository
         await _ctx.SaveChangesAsync(ct);
     }
 
-    /* ---------------- share-support ---------------- */
-
     public async Task<IReadOnlyList<User>> GetByRagIdAsync(Guid ragId, CancellationToken ct = default)
         => await _ctx.Users.AsNoTracking()
                            .Where(u => u.RagId == ragId)

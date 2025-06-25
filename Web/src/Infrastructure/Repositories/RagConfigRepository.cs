@@ -25,21 +25,20 @@ public sealed class RagConfigRepository : IRagConfigRepository
         }
         else
         {
-            /* копируем ВСЕ актуальные поля */
-            existing.Prompt             = cfg.Prompt;
-            existing.DocumentId         = cfg.DocumentId;
-            existing.TopK               = cfg.TopK;
-            existing.Temperature        = cfg.Temperature;
-            existing.Threshold          = cfg.Threshold;
+            existing.Prompt = cfg.Prompt;
+            existing.DocumentId = cfg.DocumentId;
+            existing.TopK = cfg.TopK;
+            existing.Temperature = cfg.Temperature;
+            existing.Threshold = cfg.Threshold;
 
-            existing.LlmModel           = cfg.LlmModel;
-            existing.RetrievePrompt     = cfg.RetrievePrompt;
+            existing.LlmModel = cfg.LlmModel;
+            existing.RetrievePrompt = cfg.RetrievePrompt;
             existing.AugmentationPrompt = cfg.AugmentationPrompt;
 
-            existing.SplitMethod        = cfg.SplitMethod;
-            existing.BatchSize          = cfg.BatchSize;
-            existing.SplitPrompt        = cfg.SplitPrompt;
-            existing.TablePrompt        = cfg.TablePrompt;
+            existing.SplitMethod = cfg.SplitMethod;
+            existing.BatchSize = cfg.BatchSize;
+            existing.SplitPrompt = cfg.SplitPrompt;
+            existing.TablePrompt = cfg.TablePrompt;
 
             _ctx.RagConfigs.Update(existing);
         }

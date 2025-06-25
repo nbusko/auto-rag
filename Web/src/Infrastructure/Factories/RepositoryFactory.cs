@@ -6,7 +6,7 @@ namespace AutoRag.Infrastructure.Factories;
 public sealed class RepositoryFactory:IRepositoryFactory
 {
     private readonly AutoRagContext _ctx;
-    public RepositoryFactory(AutoRagContext ctx)=>_ctx=ctx;
+    public RepositoryFactory(AutoRagContext ctx) => _ctx=ctx;
     public IYearDataRepository YearDataRepository => new YearDataRepository(_ctx);
     public IShareLinkRepository ShareLinkRepository => new ShareLinkRepository(_ctx);
 }

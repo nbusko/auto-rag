@@ -8,8 +8,8 @@ namespace AutoRag.Application.Services;
 public sealed class ShareService : IShareService
 {
     private readonly IShareLinkRepository _links;
-    private readonly IUserRepository      _users;
-    private readonly ICurrentUser         _current;
+    private readonly IUserRepository _users;
+    private readonly ICurrentUser _current;
 
     public ShareService(IShareLinkRepository l, IUserRepository u, ICurrentUser cur)
         => (_links,_users,_current) = (l,u,cur);
@@ -42,9 +42,9 @@ public sealed class ShareService : IShareService
         var user = new User
         {
             FullName = dto.FullName,
-            Email    = dto.Email,
-            RagId    = RagId,
-            Role     = "member"
+            Email = dto.Email,
+            RagId = RagId,
+            Role = "member"
         };
         await _users.AddAsync(user, pwdHash, ct);
         return true;

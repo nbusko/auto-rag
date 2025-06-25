@@ -83,15 +83,6 @@ services:
       - "9000:9000"
       - "9001:9001"
 
-  assistant:
-    build:
-      context: ./assistant
-      dockerfile: Dockerfile
-    container_name: auto-rag-assistant-1
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-
   web:
     build:
       context: ./Web
@@ -102,7 +93,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
-      assistant:
+      document_processor:
         condition: service_started
     environment:
       ASPNETCORE_URLS: http://+:8080
@@ -111,7 +102,6 @@ services:
       Minio__AccessKey: minio
       Minio__SecretKey: minio123
       Minio__Bucket: autorag
-      ExternalApis__Assistant: http://assistant:8000
       ExternalApis__RagService: http://rag_service:5050
     ports:
       - "8080:8080"

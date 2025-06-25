@@ -16,11 +16,10 @@
     <MudPaper Class="pa-6" Style="max-width:450px;width:100%">
         <MudTabs @bind-ActivePanelIndex="_tabIndex" Rounded="true">
 
-            <!-- ---------------- REGISTER ---------------- -->
             <MudTabPanel Text="Register">
                 <MudForm @ref="_regForm">
                     <MudTextField @bind-Value="_vm.FullName" Label="Full name" Required="true" Class="mb-3" />
-                    <MudTextField @bind-Value="_vm.Email"    Label="Email"      Required="true" Class="mb-3" />
+                    <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" Class="mb-3" />
                     <MudTextField @bind-Value="_vm.Password" Label="Password"
                                    InputType="InputType.Password" Required="true" Class="mb-4" />
 
@@ -38,10 +37,9 @@
                 @Message()
             </MudTabPanel>
 
-            <!-- ---------------- LOGIN ---------------- -->
             <MudTabPanel Text="Login">
                 <MudForm @ref="_loginForm">
-                    <MudTextField @bind-Value="_vm.Email"    Label="Email"      Required="true" Class="mb-3" />
+                    <MudTextField @bind-Value="_vm.Email" Label="Email" Required="true" Class="mb-3" />
                     <MudTextField @bind-Value="_vm.Password" Label="Password"
                                    InputType="InputType.Password" Required="true" Class="mb-4" />
 
@@ -70,7 +68,7 @@
     private readonly AuthPageVm _vm = new();
     private int _tabIndex;
 
-    private MudForm _regForm   = default!;
+    private MudForm _regForm = default!;
     private MudForm _loginForm = default!;
 
     private RenderFragment Message() => @<div class="mt-2 d-flex justify-center">
@@ -94,7 +92,7 @@
             new RegisterDto(_vm.FullName!, _vm.Email, _vm.Password),
             Token);
         _vm.Message = res.Message;
-        _vm.IsBusy  = false;
+        _vm.IsBusy = false;
 
         if (!string.IsNullOrEmpty(res.UserId))
             Nav.NavigateTo("/home");

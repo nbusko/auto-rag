@@ -3,8 +3,8 @@
 @using AutoRag.Application.DTOs
 @using AutoRag.Application.Interfaces
 @inject IFileStorageService FileSvc
-@inject IRagConfigService  ConfigSvc
-@inject ISnackbar          Snackbar
+@inject IRagConfigService ConfigSvc
+@inject ISnackbar Snackbar
 
 <PageTitle>RAG settings</PageTitle>
 
@@ -14,7 +14,6 @@
 
     <MudForm @ref="_form">
 
-        <!-- ---------- DOCUMENT ---------- -->
         <MudSelect T="Guid?" Label="Knowledge base (document)"
                    @bind-Value="_cfg.SelectedDocumentId"
                    Required="true" Class="mb-4">
@@ -31,7 +30,6 @@
             }
         </MudSelect>
 
-        <!-- ---------- RETRIEVAL ---------- -->
         <MudDivider Class="my-4" />
         <MudText Typo="Typo.subtitle1">Search parameters</MudText>
 
@@ -49,7 +47,6 @@
                          Step="@(0.05m)"
                          @bind-Value="_cfg.Threshold" Class="mb-4" />
 
-        <!-- ---------- LLM & PROMPTS ---------- -->
         <MudDivider Class="my-4" />
         <MudText Typo="Typo.subtitle1">LLM &amp; prompts</MudText>
 
@@ -70,7 +67,6 @@
                       Label="Prompt for passage selection (prompt_augmentation)"
                       @bind-Value="_augEditable" Class="mb-4" />
 
-        <!-- ---------- DOC-PROCESSOR ---------- -->
         <MudDivider Class="my-4" />
         <MudText Typo="Typo.subtitle1">Default document-processing</MudText>
 
@@ -99,9 +95,7 @@
 </MudPaper>
 
 @code {
-/* =======================================================================
- *                       1.  Н е и з м е н я е м ы е  х в о с т ы
- * -----------------------------------------------------------------------*/
+
 private const string GEN_TAIL = @"
 
 Запрос пользователя: {request}
@@ -149,9 +143,6 @@ private const string TABLE_TAIL = @"
 
 Не добавляй дополнительных комментариев, начни отвечать с [" ;
 
-/* =======================================================================
- *                   2.  P y t h o n - к о н с т а н т ы  (head)
- * -----------------------------------------------------------------------*/
 private const string CONST_GEN_HEAD = @"
 Ты агент поддержки и отвечаешь на ответы пользователя по предоставленной информации.
 Тебе будет дан запрос и информация, на основании которой ты должен сформировать подробный, красиво оформленный ответ.
@@ -187,32 +178,26 @@ private const string CONST_TABLE_HEAD = @"
 3. Добавь контекст и описания где это необходимо
 4. Сохрани структуру и логику данных" ;
 
-/* =======================================================================
- *                               3.  S t a t e
- * -----------------------------------------------------------------------*/
 private List<DocumentInfoDto> _docs = [];
 
 private RagConfigDto _cfg = new(null, (CONST_GEN_HEAD + GEN_TAIL).Trim(), 3)
 {
-    RetrievePrompt     = (CONST_RETRIEVE_HEAD + RETRIEVE_TAIL).Trim(),
-    AugmentationPrompt = (CONST_AUG_HEAD      + AUG_TAIL     ).Trim(),
-    SplitPrompt        = (CONST_SPLIT_HEAD    + SPLIT_TAIL   ).Trim(),
-    TablePrompt        = (CONST_TABLE_HEAD    + TABLE_TAIL   ).Trim(),
-    LlmModel           = "gpt-4o-mini"
+    RetrievePrompt= (CONST_RETRIEVE_HEAD + RETRIEVE_TAIL).Trim(),
+    AugmentationPrompt = (CONST_AUG_HEAD + AUG_TAIL).Trim(),
+    SplitPrompt = (CONST_SPLIT_HEAD + SPLIT_TAIL).Trim(),
+    TablePrompt = (CONST_TABLE_HEAD + TABLE_TAIL).Trim(),
+    LlmModel = "gpt-4o-mini"
 };
 
-/* -------- editable части (без хвостов) ---------- */
-private string _genEditable      = CONST_GEN_HEAD.Trim();
+private string _genEditable = CONST_GEN_HEAD.Trim();
 private string _retrieveEditable = CONST_RETRIEVE_HEAD.Trim();
-private string _augEditable      = CONST_AUG_HEAD.Trim();
-private string _splitEditable    = CONST_SPLIT_HEAD.Trim();
-private string _tableEditable    = CONST_TABLE_HEAD.Trim();
+private string _augEditable = CONST_AUG_HEAD.Trim();
+private string _splitEditable = CONST_SPLIT_HEAD.Trim();
+private string _tableEditable = CONST_TABLE_HEAD.Trim();
 
 private MudForm _form = default!;
 
-/* =======================================================================
- *                                4.  Init
- * -----------------------------------------------------------------------*/
+
 protected override async Task OnInitializedAsync()
 {
     _docs = (await FileSvc.ListAsync()).ToList();
@@ -224,24 +209,18 @@ protected override async Task OnInitializedAsync()
     RestoreEditableParts();
 }
 
-/* =======================================================================
- *                                5.  Save
- * -----------------------------------------------------------------------*/
 private async Task Save()
 {
     await _form.Validate();
     if (!_form.IsValid) return;
 
-    ComposePrompts();          // склеиваем editable + tails
+    ComposePrompts();
     EnsureOtherDefaults();
 
     await ConfigSvc.SaveAsync(_cfg);
     Snackbar.Add("Configuration saved", Severity.Success);
 }
 
-/* =======================================================================
- *                              6.  Helpers
- * -----------------------------------------------------------------------*/
 private static string StripTail(string full, string tail)
 {
     var idx = full.LastIndexOf(tail, StringComparison.Ordinal);
@@ -253,20 +232,20 @@ private static string Compose(string editable, string tail)
 
 private void RestoreEditableParts()
 {
-    _genEditable      = StripTail(_cfg.SystemPrompt       ?? "", GEN_TAIL);
-    _retrieveEditable = StripTail(_cfg.RetrievePrompt     ?? "", RETRIEVE_TAIL);
-    _augEditable      = StripTail(_cfg.AugmentationPrompt ?? "", AUG_TAIL);
-    _splitEditable    = StripTail(_cfg.SplitPrompt        ?? "", SPLIT_TAIL);
-    _tableEditable    = StripTail(_cfg.TablePrompt        ?? "", TABLE_TAIL);
+    _genEditable = StripTail(_cfg.SystemPrompt ?? "", GEN_TAIL);
+    _retrieveEditable = StripTail(_cfg.RetrievePrompt ?? "", RETRIEVE_TAIL);
+    _augEditable = StripTail(_cfg.AugmentationPrompt ?? "", AUG_TAIL);
+    _splitEditable = StripTail(_cfg.SplitPrompt ?? "", SPLIT_TAIL);
+    _tableEditable = StripTail(_cfg.TablePrompt ?? "", TABLE_TAIL);
 }
 
 private void ComposePrompts()
 {
-    _cfg.SystemPrompt       = Compose(_genEditable,      GEN_TAIL);
-    _cfg.RetrievePrompt     = Compose(_retrieveEditable, RETRIEVE_TAIL);
+    _cfg.SystemPrompt = Compose(_genEditable,      GEN_TAIL);
+    _cfg.RetrievePrompt  = Compose(_retrieveEditable, RETRIEVE_TAIL);
     _cfg.AugmentationPrompt = Compose(_augEditable,      AUG_TAIL);
-    _cfg.SplitPrompt        = Compose(_splitEditable,    SPLIT_TAIL);
-    _cfg.TablePrompt        = Compose(_tableEditable,    TABLE_TAIL);
+    _cfg.SplitPrompt = Compose(_splitEditable,    SPLIT_TAIL);
+    _cfg.TablePrompt = Compose(_tableEditable,    TABLE_TAIL);
 }
 
 private void EnsureOtherDefaults()

@@ -48,11 +48,11 @@ builder.Services.AddSingleton<IMinioClient>(sp =>
 });
 
 /* ---------- Repositories ---------- */
-builder.Services.AddScoped<IUserRepository,              UserRepository>();
-builder.Services.AddScoped<IYearDataRepository,          YearDataRepository>();
-builder.Services.AddScoped<IRagConfigRepository,         RagConfigRepository>();
-builder.Services.AddScoped<IChatHistoryRepository,       ChatHistoryRepository>();
-builder.Services.AddScoped<IShareLinkRepository,         ShareLinkRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IYearDataRepository, YearDataRepository>();
+builder.Services.AddScoped<IRagConfigRepository, RagConfigRepository>();
+builder.Services.AddScoped<IChatHistoryRepository, ChatHistoryRepository>();
+builder.Services.AddScoped<IShareLinkRepository, ShareLinkRepository>();
 builder.Services.AddScoped<IDocumentEmbeddingRepository, DocumentEmbeddingRepository>();
 
 /* ---------- External clients ---------- */
@@ -70,19 +70,18 @@ builder.Services.AddHttpClient<IRagService, RagServiceClient>(c =>
 
 builder.Services.AddHttpClient<IDocumentProcessorService, DocumentProcessorClient>(c =>
 {
-    /*  внутри docker-сети имя контейнера ‑ document_processor  */
     var baseUrl = cfg["ExternalApis:DocumentProcessor"] ?? "http://document_processor:5030/";
     c.BaseAddress = new Uri(baseUrl);
 });
 
 /* ---------- Services ---------- */
-builder.Services.AddScoped<IAuthService,      AuthService>();
-builder.Services.AddScoped<IAccountService,   AccountService>();
-builder.Services.AddScoped<IYearDataService,  YearDataService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IYearDataService, YearDataService>();
 builder.Services.AddScoped<IRagConfigService, RagConfigService>();
-builder.Services.AddScoped<IChatService,      ChatService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IFileStorageService, MinioFileStorageService>();
-builder.Services.AddScoped<IShareService,       ShareService>();
+builder.Services.AddScoped<IShareService, ShareService>();
 
 /* ---------- misc ---------- */
 builder.Services.AddAutoMapper(typeof(YearDataProfile).Assembly);

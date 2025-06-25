@@ -3,10 +3,10 @@
 @using AutoRag.Application.Interfaces
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.JSInterop
-@inject IChatService       ChatSvc
-@inject ISnackbar          Snackbar
-@inject IJSRuntime         Js
-@inject NavigationManager  Nav
+@inject IChatService ChatSvc
+@inject ISnackbar Snackbar
+@inject IJSRuntime Js
+@inject NavigationManager Nav
 @using MudBlazor
 @using Markdig
 @implements IDisposable
@@ -70,24 +70,20 @@ else
 }
 
 @code {
-    /* ---------------- state ---------------- */
     private readonly List<ChatMessageDto> _messages = [];
     private string _input = string.Empty;
     private MudTextField<string> _inputRef = default!;
     private bool _notAuthenticated;
 
-    /* waiting indicator */
     private bool _waiting;
     private DateTime _waitStart;
-    private double  _waitSeconds;
+    private double _waitSeconds;
     private System.Timers.Timer? _timer;
 
-    /* ---------------- init ---------------- */
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            /* уже отсортирован в ChatService (по Id) */
             var history = await ChatSvc.GetHistoryAsync();
             _messages.AddRange(history);
             await ScrollToBottom();
@@ -104,7 +100,6 @@ else
         }
     }
 
-    /* ---------------- handlers ---------------- */
     private async Task HandleKey(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await Send();
@@ -115,9 +110,9 @@ else
         if (_notAuthenticated || string.IsNullOrWhiteSpace(_input)) return;
 
         var text = _input.Trim();
-        _input = string.Empty;                     // очистка model
+        _input = string.Empty;
         await InvokeAsync(StateHasChanged);
-        _inputRef.Clear();                         // очистка UI
+        _inputRef.Clear();
 
         _messages.Add(new("user", text, DateTime.UtcNow));
         StartWaitingIndicator();

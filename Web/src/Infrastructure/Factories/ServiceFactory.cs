@@ -9,7 +9,6 @@ public sealed class ServiceFactory : IServiceFactory
     private readonly IServiceProvider _sp;
     public ServiceFactory(IServiceProvider sp) => _sp = sp;
 
-    /* Получение экземпляра сервиса из DI-контейнера */
     IYearDataService IServiceFactory.YearDataService
         => _sp.GetRequiredService<IYearDataService>();
 }

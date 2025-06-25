@@ -1,10 +1,10 @@
 @page "/share"
 @using AutoRag.Application.DTOs
 @using AutoRag.Application.Interfaces
-@inject IShareService   ShareSvc
-@inject ISnackbar       Snackbar
+@inject IShareService ShareSvc
+@inject ISnackbar Snackbar
 @inject NavigationManager Nav
-@inject IJSRuntime      Js
+@inject IJSRuntime Js
 @using MudBlazor
 
 <PageTitle>Share</PageTitle>
@@ -12,7 +12,6 @@
 <MudPaper Class="pa-4 mx-auto" Style="max-width:700px">
     <MudText Typo="Typo.h5">Share RAG workspace</MudText>
 
-    <!-- переключатель публичной ссылки -->
     <MudSwitch T="bool"
                Checked="_enabled"
                CheckedChanged="ToggleLink"
@@ -37,7 +36,6 @@
 
     <MudDivider Class="my-4" />
 
-    <!-- участники -->
     <MudText Typo="Typo.h6">Members</MudText>
 
     <MudTable Items="_users" Dense="true" Hover="true">
@@ -58,7 +56,6 @@
         </RowTemplate>
     </MudTable>
 
-    <!-- ручное добавление -->
     <MudExpansionPanels Class="mt-3">
         <MudExpansionPanel Text="Add member manually">
             <MudForm @ref="_addForm">
@@ -81,16 +78,14 @@
     private CreateSubUserDto _add   = new();
     private MudForm _addForm = default!;
 
-    /* ---------------- init ---------------- */
     protected override async Task OnInitializedAsync()
     {
-        _link     = await ShareSvc.GetOrCreateLinkAsync();
-        _enabled  = _link.Enabled;
+        _link = await ShareSvc.GetOrCreateLinkAsync();
+        _enabled = _link.Enabled;
         _shareUrl = $"{Nav.BaseUri}auth?token={_link.Token}";
-        _users    = (await ShareSvc.ListUsersAsync()).ToList();
+        _users = (await ShareSvc.ListUsersAsync()).ToList();
     }
 
-    /* ---------------- switch ---------------- */
     private async Task ToggleLink(bool val)
     {
         var ok = await ShareSvc.EnableLinkAsync(val);
@@ -104,7 +99,6 @@
         Snackbar.Add(val ? "Public link enabled" : "Public link disabled", Severity.Info);
     }
 
-    /* ---------------- clipboard ---------------- */
     private async Task CopyLink()
     {
         if (!_enabled)
@@ -116,7 +110,6 @@
         Snackbar.Add("Copied", Severity.Success);
     }
 
-    /* ---------------- members ---------------- */
     private async Task AddUser()
     {
         await _addForm.Validate();

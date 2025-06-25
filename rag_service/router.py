@@ -6,7 +6,7 @@ from rag_pipeline import RAGPipeline
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
+rag_pipeline = RAGPipeline()
 
 @router.get("/")
 async def root():
@@ -27,8 +27,6 @@ async def process_rag_request(request: RAGRequest):
     try:
 
         logger.info(f"Processing user message: {request.user_message[:100]}...")
-
-        rag_pipeline = RAGPipeline()
 
         result = await rag_pipeline.process_rag_request(
             request.chat_id,

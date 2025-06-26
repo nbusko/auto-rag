@@ -507,7 +507,7 @@ docker-compose logs -f web
 
 <a href="https://t.me/nikuto11">Никита Бусько</a>
 
-<a href="(https://t.me/helilozium">Павел Рычков</a>
+<a href="https://t.me/helilozium">Павел Рычков</a>
 
 
 **AutoRAG** - Интеллектуальная система для обработки документов и генерации ответов на основе контекста.
